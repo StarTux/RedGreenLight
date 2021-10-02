@@ -207,7 +207,6 @@ public final class EventListener implements Listener {
                         c.setRemoveWhenFarAway(false);
                         c.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
                     });
-                Bukkit.getMobGoals().removeAllGoals(creeper);
                 plugin.creeperMap.put(vec, creeper);
             }
         }
