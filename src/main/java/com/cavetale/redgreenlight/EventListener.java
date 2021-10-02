@@ -31,13 +31,11 @@ import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.potion.PotionEffectType;
@@ -51,14 +49,6 @@ public final class EventListener implements Listener {
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    void onPlayerJoin(PlayerJoinEvent event) {
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    void onPlayerQuit(PlayerQuitEvent event) {
-    }
-
     private boolean playerInGame(Player player, Location loc) {
         if (!plugin.tag.started) return false;
         if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE) {
@@ -70,6 +60,7 @@ public final class EventListener implements Listener {
 
     @EventHandler
     void onPlayerTeleport(PlayerTeleportEvent event) {
+        if (!plugin.tag.started) return;
         if (plugin.teleporting) return;
         Player player = event.getPlayer();
         Location loc = event.getTo();
@@ -80,6 +71,7 @@ public final class EventListener implements Listener {
 
     @EventHandler
     void onPlayerMove(PlayerMoveEvent event) {
+        if (!plugin.tag.started) return;
         Player player = event.getPlayer();
         Location loc = event.getTo();
         if (!playerInGame(player, loc)) return;
@@ -111,9 +103,11 @@ public final class EventListener implements Listener {
                 player.showTitle(Title.title(Component.text("Winner!", NamedTextColor.GREEN),
                                              Component.text("You win the game!", NamedTextColor.GREEN)));
                 player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.MASTER, 0.5f, 2.0f);
-                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "titles unlockset " + player.getName() + " GreenLit");
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mytems give " + player.getName() + " kitty_coin");
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
+                if (plugin.tag.event) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "titles unlockset " + player.getName() + " GreenLit");
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mytems give " + player.getName() + " kitty_coin");
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
+                }
             }
         }
     }
@@ -169,20 +163,26 @@ public final class EventListener implements Listener {
                 plugin.teleportToSpawn(player);
             }
         }
-        for (Cuboid creeperArea : plugin.creeperAreas) {
-            Vec3i vec = creeperArea.min;
-            if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
-            Creeper creeper = plugin.creeperMap.get(vec);
-            if (creeper != null && !creeper.isDead()) continue;
-            creeper = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Creeper.class, c -> {
-                    c.setPersistent(false);
-                    c.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
-                });
-            plugin.creeperMap.put(vec, creeper);
+        if ((plugin.tag.ticks % 100) == 0) {
+            for (Cuboid creeperArea : plugin.creeperAreas) {
+                Vec3i vec = creeperArea.min;
+                if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
+                Creeper creeper = plugin.creeperMap.get(vec);
+                if (creeper != null && !creeper.isDead()) continue;
+                creeper = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Creeper.class, c -> {
+                        c.setPersistent(false);
+                        c.setRemoveWhenFarAway(false);
+                        c.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+                    });
+                Bukkit.getMobGoals().removeAllGoals(creeper);
+                plugin.creeperMap.put(vec, creeper);
+            }
         }
         if ((plugin.tag.ticks % 20) == 0) {
             for (Cuboid dispenserArea : plugin.dispenserAreas) {
-                Block block = dispenserArea.min.toBlock(w);
+                Vec3i vec = dispenserArea.min;
+                if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
+                Block block = vec.toBlock(w);
                 BlockData bdata = block.getBlockData();
                 if (!(bdata instanceof Dispenser)) continue;
                 Dispenser dispenser = (Dispenser) bdata;
@@ -196,6 +196,9 @@ public final class EventListener implements Listener {
                         a.setPickupStatus(Arrow.PickupStatus.DISALLOWED);
                     });
                 w.playSound(location, Sound.ENTITY_ARROW_SHOOT, SoundCategory.BLOCKS, 1.0f, 1.0f);
+                if (arrow != null && !arrow.isDead()) {
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> arrow.remove(), 20L);
+                }
             }
         }
         final int campfireInterval = 40;
@@ -221,6 +224,7 @@ public final class EventListener implements Listener {
 
     @EventHandler
     void onPluginPlayer(PluginPlayerEvent event) {
+        if (!plugin.tag.started) return;
         if (event.getName() == PluginPlayerEvent.Name.START_FLYING && event.isCancellable()) {
             if (playerInGame(event.getPlayer(), event.getPlayer().getLocation())) {
                 event.setCancelled(true);
@@ -230,6 +234,7 @@ public final class EventListener implements Listener {
 
     @EventHandler
     void onEntityToggleGlide(EntityToggleGlideEvent event) {
+        if (!plugin.tag.started) return;
         if (!(event.getEntity() instanceof Player)) return;
         if (!event.isGliding()) return;
         Player player = (Player) event.getEntity();
@@ -243,6 +248,7 @@ public final class EventListener implements Listener {
 
     @EventHandler
     void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
+        if (!plugin.tag.started) return;
         if (!event.isFlying()) return;
         Player player = event.getPlayer();
         Location loc = player.getLocation();
@@ -255,13 +261,24 @@ public final class EventListener implements Listener {
 
     @EventHandler
     void onProjectileLaunch(ProjectileLaunchEvent event) {
+        if (!plugin.tag.started) return;
         Projectile projectile = event.getEntity();
         if (!(projectile.getShooter() instanceof Player)) return;
         Player player = (Player) projectile.getShooter();
         Location loc = player.getLocation();
         if (!playerInGame(player, loc)) return;
         event.setCancelled(true);
-        player.sendMessage(Component.text("No prjectiles!", NamedTextColor.DARK_RED));
+        player.sendMessage(Component.text("No projectiles!", NamedTextColor.DARK_RED));
+        plugin.teleportToSpawn(player);
+    }
+
+    @EventHandler
+    void onPlayerRiptide(PlayerRiptideEvent event) {
+        if (!plugin.tag.started) return;
+        Player player = (Player) event.getPlayer();
+        Location loc = player.getLocation();
+        if (!playerInGame(player, loc)) return;
+        player.sendMessage(Component.text("No riptide!", NamedTextColor.DARK_RED));
         plugin.teleportToSpawn(player);
     }
 

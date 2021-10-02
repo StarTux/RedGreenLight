@@ -6,4 +6,5 @@ public final class Tag {
     protected Light light = Light.RED;
     protected int cooldown = 0;
     protected int ticks = 0;
+    protected boolean event;
 }

@@ -50,12 +50,25 @@ public final class RedGreenLightCommand implements TabExecutor {
             sender.sendMessage("RedGreenLight stopped");
             return true;
         }
+        case "event": {
+            if (args.length > 2) return false;
+            if (args.length == 2) {
+                try {
+                    plugin.tag.event = Boolean.parseBoolean(args[1]);
+                } catch (IllegalArgumentException iae) {
+                    return false;
+                }
+                plugin.saveTag();
+            }
+            sender.sendMessage("Event mode: " + plugin.tag.event);
+            return true;
+        }
         default: return false;
         }
     }
 
     @Override
     public List<String> onTabComplete(final CommandSender sender, final Command command, final String alias, final String[] args) {
-        return List.of("load", "start", "stop", "setworld");
+        return List.of("load", "start", "stop", "setworld", "event");
     }
 }
