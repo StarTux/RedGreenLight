@@ -29,10 +29,12 @@ import org.bukkit.block.data.type.Dispenser;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -248,6 +250,18 @@ public final class EventListener implements Listener {
         if (plugin.inSpawnArea(loc)) return;
         event.setCancelled(true);
         player.sendMessage(Component.text("No flying!", NamedTextColor.DARK_RED));
+        plugin.teleportToSpawn(player);
+    }
+
+    @EventHandler
+    void onProjectileLaunch(ProjectileLaunchEvent event) {
+        Projectile projectile = event.getEntity();
+        if (!(projectile.getShooter() instanceof Player)) return;
+        Player player = (Player) projectile.getShooter();
+        Location loc = player.getLocation();
+        if (!playerInGame(player, loc)) return;
+        event.setCancelled(true);
+        player.sendMessage(Component.text("No prjectiles!", NamedTextColor.DARK_RED));
         plugin.teleportToSpawn(player);
     }
 
