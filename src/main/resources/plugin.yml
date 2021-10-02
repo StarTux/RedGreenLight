@@ -1,0 +1,27 @@
+main: com.cavetale.redgreenlight.RedGreenLightPlugin
+
+name: RedGreenLight
+version: 0.1
+description: RedGreenLight Plugin
+api-version: 1.17
+
+author: StarTux
+website: https://github.com/StarTux/RedGreenLight
+
+depend: [Core, Area, WorldEdit, Sidebar]
+softdepend: []
+
+commands:
+
+  redgreenlight:
+    aliases: []
+    description: RedGreenLight Command
+    permission: redgreenlight.redgreenlight
+    usage: |-
+      /redgreenlight
+
+permissions:
+
+  redgreenlight.redgreenlight:
+    description: Use /redgreenlight
+    default: op
