@@ -17,6 +17,7 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.World;
@@ -38,6 +39,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
@@ -69,6 +71,10 @@ public final class EventListener implements Listener {
         event.setCancelled(true);
     }
 
+    private boolean isEmpty(ItemStack item) {
+        return item == null || item.getType() == Material.AIR;
+    }
+
     @EventHandler
     void onPlayerMove(PlayerMoveEvent event) {
         if (!plugin.tag.started) return;
@@ -79,16 +85,39 @@ public final class EventListener implements Listener {
         if (player.isGliding() || player.isFlying()) {
             player.sendMessage(Component.text("No flying!", NamedTextColor.DARK_RED));
             plugin.teleportToSpawn(player);
+            return;
         }
         if (player.getVehicle() != null) {
             player.sendMessage(Component.text("No riding!", NamedTextColor.DARK_RED));
             plugin.teleportToSpawn(player);
+            return;
         }
         for (PotionEffectType pot : PotionEffectType.values()) {
             if (player.hasPotionEffect(pot)) {
                 player.sendMessage(Component.text("No potion effects!", NamedTextColor.DARK_RED));
                 plugin.teleportToSpawn(player);
+                return;
             }
+        }
+        if (!isEmpty(player.getEquipment().getHelmet())) {
+                player.sendMessage(Component.text("No armor!", NamedTextColor.DARK_RED));
+                plugin.teleportToSpawn(player);
+                return;
+        }
+        if (!isEmpty(player.getEquipment().getChestplate())) {
+                player.sendMessage(Component.text("No armor!", NamedTextColor.DARK_RED));
+                plugin.teleportToSpawn(player);
+                return;
+        }
+        if (!isEmpty(player.getEquipment().getLeggings())) {
+                player.sendMessage(Component.text("No armor!", NamedTextColor.DARK_RED));
+                plugin.teleportToSpawn(player);
+                return;
+        }
+        if (!isEmpty(player.getEquipment().getBoots())) {
+                player.sendMessage(Component.text("No armor!", NamedTextColor.DARK_RED));
+                plugin.teleportToSpawn(player);
+                return;
         }
         if (plugin.tag.light == Light.RED) {
             if (plugin.inGoalArea(loc)) return;
