@@ -191,7 +191,7 @@ public final class EventListener implements Listener {
                 player.sendMessage(Component.text("No flying!", NamedTextColor.DARK_RED));
                 plugin.teleportToSpawn(player);
             }
-            if (player.getVehicle() != null) {
+            if (player.getVehicle() != null && !plugin.inSpawnArea(loc)) {
                 player.sendMessage(Component.text("No riding!", NamedTextColor.DARK_RED));
                 plugin.teleportToSpawn(player);
             }
