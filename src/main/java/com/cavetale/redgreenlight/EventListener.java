@@ -104,8 +104,12 @@ public final class EventListener implements Listener {
                                              Component.text("You win the game!", NamedTextColor.GREEN)));
                 player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.MASTER, 0.5f, 2.0f);
                 if (plugin.tag.event) {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "titles unlockset " + player.getName() + " GreenLit");
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mytems give " + player.getName() + " kitty_coin");
+                    List<String> titles = List.of("GreenLit",
+                                                  "RedGreenLight",
+                                                  "TrafficLight");
+                    String cmd = "titles unlockset " + player.getName() + " " + String.join(" ", titles);
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+                    Mytems.KITTY_COIN.giveItemStack(player, 1);
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
                 }
             }
