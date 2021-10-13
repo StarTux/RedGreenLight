@@ -8,7 +8,7 @@ api-version: 1.17
 author: StarTux
 website: https://github.com/StarTux/RedGreenLight
 
-depend: [Core, Area, WorldEdit, Sidebar]
+depend: [Core, Mytems, Area, WorldEdit, Sidebar]
 softdepend: []
 
 commands:
