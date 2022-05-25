@@ -1,10 +1,10 @@
 main: com.cavetale.redgreenlight.RedGreenLightPlugin
-
 name: RedGreenLight
-version: 0.1
-description: RedGreenLight Plugin
-api-version: 1.17
 
+version: 0.1
+api-version: 1.18
+
+description: RedGreenLight Plugin
 author: StarTux
 website: https://github.com/StarTux/RedGreenLight
 

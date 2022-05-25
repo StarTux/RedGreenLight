@@ -10,9 +10,6 @@ import java.time.Duration;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.JoinConfiguration;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -39,9 +36,16 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
+import static net.kyori.adventure.title.Title.Times.times;
+import static net.kyori.adventure.title.Title.title;
 
 @RequiredArgsConstructor
 public final class EventListener implements Listener {
@@ -76,61 +80,61 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    void onPlayerMove(PlayerMoveEvent event) {
+    private void onPlayerMove(PlayerMoveEvent event) {
         if (!plugin.tag.started) return;
         Player player = event.getPlayer();
         Location loc = event.getTo();
         if (!playerInGame(player, loc)) return;
         if (plugin.inSpawnArea(loc)) return;
         if (player.isGliding() || player.isFlying()) {
-            player.sendMessage(Component.text("No flying!", NamedTextColor.DARK_RED));
+            player.sendMessage(text("No flying!", DARK_RED));
             plugin.teleportToSpawn(player);
             return;
         }
         if (player.getVehicle() != null) {
-            player.sendMessage(Component.text("No riding!", NamedTextColor.DARK_RED));
+            player.sendMessage(text("No riding!", DARK_RED));
             plugin.teleportToSpawn(player);
             return;
         }
         for (PotionEffectType pot : PotionEffectType.values()) {
             if (player.hasPotionEffect(pot)) {
-                player.sendMessage(Component.text("No potion effects!", NamedTextColor.DARK_RED));
+                player.sendMessage(text("No potion effects!", DARK_RED));
                 plugin.teleportToSpawn(player);
                 return;
             }
         }
         if (!isEmpty(player.getEquipment().getHelmet())) {
-                player.sendMessage(Component.text("No armor!", NamedTextColor.DARK_RED));
-                plugin.teleportToSpawn(player);
-                return;
+            player.sendMessage(text("No armor!", DARK_RED));
+            plugin.teleportToSpawn(player);
+            return;
         }
         if (!isEmpty(player.getEquipment().getChestplate())) {
-                player.sendMessage(Component.text("No armor!", NamedTextColor.DARK_RED));
-                plugin.teleportToSpawn(player);
-                return;
+            player.sendMessage(text("No armor!", DARK_RED));
+            plugin.teleportToSpawn(player);
+            return;
         }
         if (!isEmpty(player.getEquipment().getLeggings())) {
-                player.sendMessage(Component.text("No armor!", NamedTextColor.DARK_RED));
-                plugin.teleportToSpawn(player);
-                return;
+            player.sendMessage(text("No armor!", DARK_RED));
+            plugin.teleportToSpawn(player);
+            return;
         }
         if (!isEmpty(player.getEquipment().getBoots())) {
-                player.sendMessage(Component.text("No armor!", NamedTextColor.DARK_RED));
-                plugin.teleportToSpawn(player);
-                return;
+            player.sendMessage(text("No armor!", DARK_RED));
+            plugin.teleportToSpawn(player);
+            return;
         }
         if (plugin.tag.light == Light.RED) {
             if (plugin.inGoalArea(loc)) return;
             plugin.teleportToSpawn(player);
-            player.sendMessage(Component.text("You moved! Back to the start!", NamedTextColor.DARK_RED));
+            player.sendMessage(text("You moved! Back to the start!", DARK_RED));
         } else {
             if (plugin.inGoalArea(loc)) {
                 plugin.teleportToSpawn(player);
                 for (Player other : plugin.getPlayers()) {
-                    other.sendMessage(Component.text(player.getName() + " crossed the finish line!", NamedTextColor.GREEN));
+                    other.sendMessage(text(player.getName() + " crossed the finish line!", GREEN));
                 }
-                player.showTitle(Title.title(Component.text("Winner!", NamedTextColor.GREEN),
-                                             Component.text("You win the game!", NamedTextColor.GREEN)));
+                player.showTitle(title(text("Winner!", GREEN),
+                                       text("You win the game!", GREEN)));
                 player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.MASTER, 0.5f, 2.0f);
                 if (plugin.tag.event) {
                     List<String> titles = List.of("GreenLit",
@@ -145,6 +149,17 @@ public final class EventListener implements Listener {
         }
     }
 
+    private void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
+        if (!plugin.tag.started) return;
+        Player player = event.getPlayer();
+        Location loc = player.getLocation();
+        if (!playerInGame(player, loc)) return;
+        if (plugin.inSpawnArea(loc)) return;
+        if (plugin.inGoalArea(loc)) return;
+        plugin.teleportToSpawn(player);
+        player.sendMessage(text("You moved! Back to the start!", DARK_RED));
+    }
+
     protected void onTick() {
         World w = plugin.getWorld();
         List<Player> players = plugin.getPlayers();
@@ -156,18 +171,18 @@ public final class EventListener implements Listener {
             if (plugin.tag.light == Light.GREEN) {
                 plugin.tag.light = Light.YELLOW;
                 plugin.tag.cooldown = 20;
-                Title title = Title.title(Light.YELLOW.toComponent(),
-                                          Component.empty(),
-                                          Title.Times.of(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
+                Title title = title(Light.YELLOW.toComponent(),
+                                    Component.empty(),
+                                    times(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
                 for (Player player : players) {
                     player.showTitle(title);
                 }
             } else if (plugin.tag.light == Light.YELLOW) {
                 plugin.tag.light = Light.RED;
                 plugin.tag.cooldown = 100;
-                Title title = Title.title(Light.RED.toComponent(),
-                                          Component.text("Stop Moving", NamedTextColor.DARK_RED),
-                                          Title.Times.of(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
+                Title title = title(Light.RED.toComponent(),
+                                    text("Stop Moving", DARK_RED),
+                                    times(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
                 for (Player player : players) {
                     player.showTitle(title);
                     player.playSound(player.getLocation(), Sound.ENTITY_GHAST_SCREAM, SoundCategory.MASTER, 0.5f, 2.0f);
@@ -175,9 +190,9 @@ public final class EventListener implements Listener {
             } else {
                 plugin.tag.light = Light.GREEN;
                 plugin.tag.cooldown = 40 + plugin.random.nextInt(160);
-                Title title = Title.title(Light.GREEN.toComponent(),
-                                          Component.text("Go!", NamedTextColor.GREEN),
-                                          Title.Times.of(Duration.ZERO, Duration.ofMillis(1), Duration.ofSeconds(1)));
+                Title title = title(Light.GREEN.toComponent(),
+                                    text("Go!", GREEN),
+                                    times(Duration.ZERO, Duration.ofMillis(1), Duration.ofSeconds(1)));
                 for (Player player : players) {
                     player.showTitle(title);
                     player.playSound(player.getLocation(), Sound.BLOCK_BELL_USE, SoundCategory.MASTER, 0.5f, 2.0f);
@@ -188,11 +203,11 @@ public final class EventListener implements Listener {
             Location loc = player.getLocation();
             if (!playerInGame(player, loc)) continue;
             if (player.isGliding() || player.isFlying()) {
-                player.sendMessage(Component.text("No flying!", NamedTextColor.DARK_RED));
+                player.sendMessage(text("No flying!", DARK_RED));
                 plugin.teleportToSpawn(player);
             }
             if (player.getVehicle() != null && !plugin.inSpawnArea(loc)) {
-                player.sendMessage(Component.text("No riding!", NamedTextColor.DARK_RED));
+                player.sendMessage(text("No riding!", DARK_RED));
                 plugin.teleportToSpawn(player);
             }
         }
@@ -274,7 +289,7 @@ public final class EventListener implements Listener {
         if (!playerInGame(player, loc)) return;
         if (plugin.inSpawnArea(loc)) return;
         event.setCancelled(true);
-        player.sendMessage(Component.text("No flying!", NamedTextColor.DARK_RED));
+        player.sendMessage(text("No flying!", DARK_RED));
         plugin.teleportToSpawn(player);
     }
 
@@ -287,7 +302,7 @@ public final class EventListener implements Listener {
         if (!playerInGame(player, loc)) return;
         if (plugin.inSpawnArea(loc)) return;
         event.setCancelled(true);
-        player.sendMessage(Component.text("No flying!", NamedTextColor.DARK_RED));
+        player.sendMessage(text("No flying!", DARK_RED));
         plugin.teleportToSpawn(player);
     }
 
@@ -300,7 +315,7 @@ public final class EventListener implements Listener {
         Location loc = player.getLocation();
         if (!playerInGame(player, loc)) return;
         event.setCancelled(true);
-        player.sendMessage(Component.text("No projectiles!", NamedTextColor.DARK_RED));
+        player.sendMessage(text("No projectiles!", DARK_RED));
         plugin.teleportToSpawn(player);
     }
 
@@ -310,7 +325,7 @@ public final class EventListener implements Listener {
         Player player = (Player) event.getPlayer();
         Location loc = player.getLocation();
         if (!playerInGame(player, loc)) return;
-        player.sendMessage(Component.text("No riptide!", NamedTextColor.DARK_RED));
+        player.sendMessage(text("No riptide!", DARK_RED));
         plugin.teleportToSpawn(player);
     }
 
@@ -320,9 +335,9 @@ public final class EventListener implements Listener {
         Player player = event.getPlayer();
         if (!plugin.inGameArea(player.getLocation())) return;
         event.add(plugin, Priority.HIGHEST,
-                  List.of(Component.join(JoinConfiguration.noSeparators(),
+                  List.of(Component.join(noSeparators(),
                                          Mytems.TRAFFIC_LIGHT.component,
-                                         Component.text(" Light ", NamedTextColor.AQUA),
-                                         plugin.tag.light.toComponent().decorate(TextDecoration.BOLD))));
+                                         text(" Light ", AQUA),
+                                         plugin.tag.light.toComponent().decorate(BOLD))));
     }
 }
