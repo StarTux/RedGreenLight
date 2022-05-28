@@ -119,5 +119,13 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- Tutor -->
+    <dependency>
+      <groupId>com.cavetale.tutor</groupId>
+      <artifactId>tutor</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
   </dependencies>
 </project>

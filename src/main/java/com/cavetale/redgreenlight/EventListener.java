@@ -8,6 +8,7 @@ import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.WardrobeItem;
 import com.cavetale.sidebar.PlayerSidebarEvent;
 import com.cavetale.sidebar.Priority;
+import com.cavetale.tutor.event.PetSpawnEvent;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -417,5 +418,12 @@ public final class EventListener implements Listener {
         if (!plugin.tag.playing.contains(event.getPlayer().getUniqueId())) return;
         if (!plugin.inGameArea(event.getPlayer().getLocation())) return;
         event.setRespawnLocation(plugin.randomSpawnLocation());
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    private void onPetSpawn(PetSpawnEvent event) {
+        if (plugin.inGameArea(event.getLocation())) {
+            event.setCancelled(true);
+        }
     }
 }
