@@ -8,20 +8,19 @@ description: RedGreenLight Plugin
 author: StarTux
 website: https://github.com/StarTux/RedGreenLight
 
-depend: [Core, Mytems, Area, WorldEdit, Sidebar]
+depend: [Core, Mytems, Area, WorldEdit, Sidebar, Fam]
 softdepend: []
 
 commands:
 
   redgreenlight:
     aliases: []
-    description: RedGreenLight Command
-    permission: redgreenlight.redgreenlight
-    usage: |-
-      /redgreenlight
+    description: Admin Interface
+    permission: redgreenlight.admin
+    usage: /redgreenlight
 
 permissions:
 
-  redgreenlight.redgreenlight:
+  redgreenlight.admin:
     description: Use /redgreenlight
     default: op

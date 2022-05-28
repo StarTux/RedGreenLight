@@ -1,18 +1,23 @@
 package com.cavetale.redgreenlight;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.TextColor.color;
 
 @RequiredArgsConstructor
 public enum Light {
-    RED(Component.text("Red", NamedTextColor.DARK_RED)),
-    YELLOW(Component.text("Yellow", NamedTextColor.YELLOW)),
-    GREEN(Component.text("Green", NamedTextColor.GREEN));
+    RED("Red", color(0xFF0000), BossBar.Color.RED),
+    YELLOW("Yellow", color(0xFFFF00), BossBar.Color.YELLOW),
+    GREEN("Green", color(0x00FF00), BossBar.Color.GREEN);
 
-    public final Component component;
+    public final String displayName;
+    public final TextColor textColor;
+    public final BossBar.Color bossBarColor;
 
     public Component toComponent() {
-        return component;
+        return text(displayName, textColor);
     }
 }
