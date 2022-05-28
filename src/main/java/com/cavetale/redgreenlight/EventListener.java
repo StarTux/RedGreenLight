@@ -151,34 +151,35 @@ public final class EventListener implements Listener {
             if (plugin.inGoalArea(loc)) return;
             plugin.teleportToSpawn(player);
             player.sendMessage(text("You moved! Back to the start!", DARK_RED));
-        } else {
-            if (plugin.inGoalArea(loc)) {
-                plugin.tag.playing.remove(player.getUniqueId());
-                for (Player other : plugin.getPresentPlayers()) {
-                    other.sendMessage(join(noSeparators(),
-                                           newline(),
-                                           text(player.getName() + " crossed the finish line!", GREEN),
-                                           newline()));
-                }
-                player.showTitle(title(text("Winner!", GREEN),
-                                       text("You win the game!", GREEN)));
-                player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.MASTER, 0.5f, 2.0f);
-                plugin.tag.addCompletions(player.getUniqueId(), 1);
-                plugin.computeHighscore();
-                plugin.saveTag();
-                if (plugin.tag.event) {
-                    List<String> titles = List.of("GreenLit",
-                                                  "RedGreenLight",
-                                                  "TrafficLight");
-                    String cmd = "titles unlockset " + player.getName() + " " + String.join(" ", titles);
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
-                }
+        } else if (plugin.inGoalArea(loc)) {
+            plugin.getLogger().info(player.getName() + " crossed the finish line");
+            plugin.tag.playing.remove(player.getUniqueId());
+            for (Player other : plugin.getPresentPlayers()) {
+                other.sendMessage(join(noSeparators(),
+                                       newline(),
+                                       text(player.getName() + " crossed the finish line!", GREEN),
+                                       newline()));
+            }
+            player.showTitle(title(text("Winner!", GREEN),
+                                   text("You win the game!", GREEN)));
+            player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.MASTER, 0.5f, 2.0f);
+            plugin.tag.addCompletions(player.getUniqueId(), 1);
+            plugin.computeHighscore();
+            plugin.saveTag();
+            if (plugin.tag.event) {
+                List<String> titles = List.of("GreenLit",
+                                              "RedGreenLight",
+                                              "TrafficLight");
+                String cmd = "titles unlockset " + player.getName() + " " + String.join(" ", titles);
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
             }
         }
     }
 
+    @EventHandler
     private void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
         if (!plugin.tag.started) return;
+        if (plugin.tag.light != Light.RED) return;
         Player player = event.getPlayer();
         Location loc = player.getLocation();
         if (!isReadyToPlay(player, loc)) return;
