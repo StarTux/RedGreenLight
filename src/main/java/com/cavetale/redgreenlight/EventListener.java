@@ -39,6 +39,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
@@ -46,6 +47,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
+import static com.cavetale.core.font.Unicode.tiny;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.text;
@@ -76,7 +78,7 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    void onPlayerTeleport(PlayerTeleportEvent event) {
+    private void onPlayerTeleport(PlayerTeleportEvent event) {
         if (!plugin.tag.started) return;
         if (plugin.teleporting) return;
         Player player = event.getPlayer();
@@ -149,7 +151,7 @@ public final class EventListener implements Listener {
             player.sendMessage(text("You moved! Back to the start!", DARK_RED));
         } else {
             if (plugin.inGoalArea(loc)) {
-                plugin.teleportToSpawn(player);
+                plugin.tag.playing.remove(player.getUniqueId());
                 for (Player other : plugin.getPresentPlayers()) {
                     other.sendMessage(join(noSeparators(),
                                            newline(),
@@ -159,15 +161,15 @@ public final class EventListener implements Listener {
                 player.showTitle(title(text("Winner!", GREEN),
                                        text("You win the game!", GREEN)));
                 player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.MASTER, 0.5f, 2.0f);
+                plugin.tag.addCompletions(player.getUniqueId(), 1);
+                plugin.computeHighscore();
+                plugin.saveTag();
                 if (plugin.tag.event) {
                     List<String> titles = List.of("GreenLit",
                                                   "RedGreenLight",
                                                   "TrafficLight");
                     String cmd = "titles unlockset " + player.getName() + " " + String.join(" ", titles);
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
-                    plugin.tag.addCompletions(player.getUniqueId(), 1);
-                    plugin.computeHighscore();
-                    plugin.saveTag();
                 }
             }
         }
@@ -190,8 +192,11 @@ public final class EventListener implements Listener {
         // Prune players who left
         for (UUID uuid : List.copyOf(plugin.tag.playing)) {
             Player player = Bukkit.getPlayer(uuid);
-            if (player == null || !plugin.inGameArea(player.getLocation())) {
+            if (player == null) {
                 plugin.tag.playing.remove(uuid);
+            } else if (!plugin.inGameArea(player.getLocation())) {
+                plugin.tag.playing.remove(uuid);
+                player.hideBossBar(plugin.bossBar);
             }
         }
         // Tick players
@@ -250,7 +255,9 @@ public final class EventListener implements Listener {
                 continue;
             }
             if (!plugin.tag.playing.contains(player.getUniqueId())) {
-                plugin.teleportToSpawn(player);
+                if (!plugin.inGoalArea(player.getLocation())) {
+                    plugin.teleportToSpawn(player);
+                }
                 continue;
             }
             if (player.isGliding() || player.isFlying()) {
@@ -290,6 +297,7 @@ public final class EventListener implements Listener {
                                                             facing.getModZ() + 0.5);
                 Vector velocity = facing.getDirection().multiply(2.0);
                 Arrow arrow = w.spawn(location, Arrow.class, a -> {
+                        a.setPersistent(false);
                         a.setVelocity(velocity);
                         a.setPickupStatus(Arrow.PickupStatus.DISALLOWED);
                     });
@@ -321,7 +329,7 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    void onPluginPlayer(PluginPlayerEvent event) {
+    private void onPluginPlayer(PluginPlayerEvent event) {
         if (!plugin.tag.started) return;
         if (event.getName() == PluginPlayerEvent.Name.START_FLYING && event.isCancellable()) {
             if (isReadyToPlay(event.getPlayer(), event.getPlayer().getLocation())) {
@@ -331,7 +339,7 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    void onEntityToggleGlide(EntityToggleGlideEvent event) {
+    private void onEntityToggleGlide(EntityToggleGlideEvent event) {
         if (!plugin.tag.started) return;
         if (!(event.getEntity() instanceof Player)) return;
         if (!event.isGliding()) return;
@@ -345,7 +353,7 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
+    private void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
         if (!plugin.tag.started) return;
         if (!event.isFlying()) return;
         Player player = event.getPlayer();
@@ -358,7 +366,7 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    void onProjectileLaunch(ProjectileLaunchEvent event) {
+    private void onProjectileLaunch(ProjectileLaunchEvent event) {
         if (!plugin.tag.started) return;
         Projectile projectile = event.getEntity();
         if (!(projectile.getShooter() instanceof Player)) return;
@@ -371,7 +379,7 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    void onPlayerRiptide(PlayerRiptideEvent event) {
+    private void onPlayerRiptide(PlayerRiptideEvent event) {
         if (!plugin.tag.started) return;
         Player player = (Player) event.getPlayer();
         Location loc = player.getLocation();
@@ -381,16 +389,25 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    void onPlayerSidebar(PlayerSidebarEvent event) {
+    private void onPlayerSidebar(PlayerSidebarEvent event) {
         if (!plugin.tag.started) return;
         Player player = event.getPlayer();
         if (!plugin.inGameArea(player.getLocation())) return;
         List<Component> lines = new ArrayList<>();
         lines.add(plugin.TITLE);
-        lines.add(join(noSeparators(), text("Light ", GRAY), plugin.tag.light.toComponent().decorate(BOLD)));
+        lines.add(join(noSeparators(), text(tiny("light "), GRAY), plugin.tag.light.toComponent().decorate(BOLD)));
+        lines.add(join(noSeparators(), text(tiny("wins "), GRAY), text(plugin.tag.getCompletions(player.getUniqueId()), GOLD)));
         if (plugin.tag.event) {
             lines.addAll(Highscore.sidebar(plugin.highscore));
         }
         event.add(plugin, Priority.HIGHEST, lines);
+    }
+
+    @EventHandler
+    private void onPlayerRespawn(PlayerRespawnEvent event) {
+        if (!plugin.tag.started) return;
+        if (!plugin.tag.playing.contains(event.getPlayer().getUniqueId())) return;
+        if (!plugin.inGameArea(event.getPlayer().getLocation())) return;
+        event.setRespawnLocation(plugin.randomSpawnLocation());
     }
 }

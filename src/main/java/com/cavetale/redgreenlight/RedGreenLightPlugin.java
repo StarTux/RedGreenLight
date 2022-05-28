@@ -174,25 +174,30 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         return Bukkit.getWorld(tag.world);
     }
 
+    public Location randomSpawnLocation() {
+        Set<Vec3i> options = new HashSet<>();
+        for (Cuboid area : warpAreas) {
+            options.addAll(area.enumerate());
+        }
+        if (options.isEmpty()) throw new IllegalStateException("Warp is empty");
+        List<Vec3i> list = new ArrayList<>(options);
+        Vec3i center = list.get(random.nextInt(list.size()));
+        return center.toBlock(getWorld()).getLocation().add(0.5, 0.0, 0.5);
+    }
+
     /**
      * Warp to spawn and mark as playing.
      */
     protected void teleportToSpawn(Player player) {
         if (!inSpawnArea(player.getLocation())) {
-            Set<Vec3i> options = new HashSet<>();
-            for (Cuboid area : warpAreas) {
-                options.addAll(area.enumerate());
-            }
-            if (options.isEmpty()) throw new IllegalStateException("Warp is empty");
-            List<Vec3i> list = new ArrayList<>(options);
-            Vec3i center = list.get(random.nextInt(list.size()));
-            Location location = center.toBlock(getWorld()).getLocation().add(0.5, 0.0, 0.5);
+            Location location = randomSpawnLocation();
             Location ploc = player.getLocation();
             location.setPitch(ploc.getPitch());
             location.setYaw(ploc.getYaw());
             teleporting = true;
             player.teleport(location, TeleportCause.PLUGIN);
             teleporting = false;
+            player.setFallDistance(0);
         }
         if (!tag.playing.contains(player.getUniqueId())) {
             tag.playing.add(player.getUniqueId());
