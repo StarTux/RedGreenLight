@@ -70,6 +70,7 @@ public final class RedGreenLightCommand implements TabExecutor {
         case "reset": {
             plugin.tag.completions.clear();
             plugin.saveTag();
+            plugin.computeHighscore();
             sender.sendMessage(text("Completions were reset!", AQUA));
             return true;
         }

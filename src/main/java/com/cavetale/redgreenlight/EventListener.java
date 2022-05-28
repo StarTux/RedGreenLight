@@ -396,7 +396,11 @@ public final class EventListener implements Listener {
         List<Component> lines = new ArrayList<>();
         lines.add(plugin.TITLE);
         lines.add(join(noSeparators(), text(tiny("light "), GRAY), plugin.tag.light.toComponent().decorate(BOLD)));
-        lines.add(join(noSeparators(), text(tiny("wins "), GRAY), text(plugin.tag.getCompletions(player.getUniqueId()), GOLD)));
+        lines.add(join(noSeparators(), text(tiny("players "), GRAY), text(plugin.tag.playing.size(), GREEN)));
+        int wins = plugin.tag.getCompletions(player.getUniqueId());
+        if (wins > 0) {
+            lines.add(join(noSeparators(), text(tiny("wins "), GRAY), text(wins, GOLD)));
+        }
         if (plugin.tag.event) {
             lines.addAll(Highscore.sidebar(plugin.highscore));
         }
