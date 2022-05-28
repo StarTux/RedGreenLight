@@ -100,6 +100,7 @@ public final class EventListener implements Listener {
     @EventHandler
     private void onPlayerMove(PlayerMoveEvent event) {
         if (!plugin.tag.started) return;
+        if (plugin.teleporting) return;
         Player player = event.getPlayer();
         Location loc = event.getTo();
         if (!isReadyToPlay(player, loc)) return;
@@ -255,7 +256,9 @@ public final class EventListener implements Listener {
                 continue;
             }
             if (!plugin.tag.playing.contains(player.getUniqueId())) {
-                if (!plugin.inGoalArea(player.getLocation())) {
+                if (plugin.inSpawnArea(player.getLocation())) {
+                    plugin.addPlaying(player);
+                } else if (!plugin.inGoalArea(player.getLocation())) {
                     plugin.teleportToSpawn(player);
                 }
                 continue;
@@ -386,6 +389,7 @@ public final class EventListener implements Listener {
         if (!isReadyToPlay(player, loc)) return;
         player.sendMessage(text("No riptide!", DARK_RED));
         plugin.teleportToSpawn(player);
+        Bukkit.getScheduler().runTask(plugin, () -> player.setVelocity(new Vector().zero()));
     }
 
     @EventHandler

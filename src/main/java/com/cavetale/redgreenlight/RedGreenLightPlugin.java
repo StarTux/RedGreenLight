@@ -51,9 +51,11 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     protected List<Highscore> highscore = List.of();
     public static final Component TITLE = join(noSeparators(),
                                                Mytems.TRAFFIC_LIGHT.component,
-                                               text(tiny("Red Light "), color(0xFF0000)),
+                                               text(tiny("Red"), color(0xFF0000)),
+                                               text(tiny("Light"), AQUA),
                                                Mytems.TRAFFIC_LIGHT.component,
-                                               text(tiny("Green Light"), color(0x00FF00)));
+                                               text(tiny("Green"), color(0x00FF00)),
+                                               text(tiny("Light"), AQUA));
     protected final BossBar bossBar = BossBar.bossBar(TITLE, 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
 
     @Override
@@ -189,23 +191,24 @@ public final class RedGreenLightPlugin extends JavaPlugin {
      * Warp to spawn and mark as playing.
      */
     protected void teleportToSpawn(Player player) {
-        if (!inSpawnArea(player.getLocation())) {
-            Location location = randomSpawnLocation();
-            Location ploc = player.getLocation();
-            location.setPitch(ploc.getPitch());
-            location.setYaw(ploc.getYaw());
-            teleporting = true;
-            player.teleport(location, TeleportCause.PLUGIN);
-            teleporting = false;
-            player.setFallDistance(0);
+        Location location = randomSpawnLocation();
+        Location ploc = player.getLocation();
+        location.setPitch(ploc.getPitch());
+        location.setYaw(ploc.getYaw());
+        teleporting = true;
+        player.teleport(location, TeleportCause.PLUGIN);
+        teleporting = false;
+        player.setFallDistance(0);
+        addPlaying(player);
+    }
+
+    protected void addPlaying(Player player) {
+        if (tag.playing.contains(player.getUniqueId())) return;
+        tag.playing.add(player.getUniqueId());
+        if (tag.event) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
         }
-        if (!tag.playing.contains(player.getUniqueId())) {
-            tag.playing.add(player.getUniqueId());
-            if (tag.event) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
-            }
-            player.showBossBar(bossBar);
-        }
+        player.showBossBar(bossBar);
     }
 
     protected void startTicking() {
