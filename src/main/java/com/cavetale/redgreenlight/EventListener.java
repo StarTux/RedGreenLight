@@ -2,7 +2,6 @@ package com.cavetale.redgreenlight;
 
 import com.cavetale.area.struct.Cuboid;
 import com.cavetale.area.struct.Vec3i;
-import com.cavetale.core.event.player.PluginPlayerEvent;
 import com.cavetale.fam.trophy.Highscore;
 import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.WardrobeItem;
@@ -331,16 +330,6 @@ public final class EventListener implements Listener {
             }
         }
         plugin.tag.ticks += 1;
-    }
-
-    @EventHandler
-    private void onPluginPlayer(PluginPlayerEvent event) {
-        if (!plugin.tag.started) return;
-        if (event.getName() == PluginPlayerEvent.Name.START_FLYING && event.isCancellable()) {
-            if (isReadyToPlay(event.getPlayer(), event.getPlayer().getLocation())) {
-                event.setCancelled(true);
-            }
-        }
     }
 
     @EventHandler
