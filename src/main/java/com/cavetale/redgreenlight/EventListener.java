@@ -2,11 +2,11 @@ package com.cavetale.redgreenlight;
 
 import com.cavetale.area.struct.Cuboid;
 import com.cavetale.area.struct.Vec3i;
+import com.cavetale.core.event.hud.PlayerHudEvent;
+import com.cavetale.core.event.hud.PlayerHudPriority;
 import com.cavetale.fam.trophy.Highscore;
 import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.WardrobeItem;
-import com.cavetale.sidebar.PlayerSidebarEvent;
-import com.cavetale.sidebar.Priority;
 import com.cavetale.tutor.event.PetSpawnEvent;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -34,10 +34,12 @@ import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Snowman;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerRiptideEvent;
@@ -148,11 +150,19 @@ public final class EventListener implements Listener {
         }
         if (plugin.tag.light == Light.RED) {
             if (plugin.inGoalArea(loc)) return;
-            plugin.teleportToSpawn(player);
-            player.sendMessage(text("You moved! Back to the start!", DARK_RED));
+            Vec3i checkpoint = plugin.tag.checkpoints.get(player.getUniqueId());
+            if (checkpoint != null) {
+                Vec3i pvec = Vec3i.of(player.getLocation());
+                if (pvec.equals(checkpoint) || pvec.add(0, -1, 0).equals(checkpoint)) {
+                    return;
+                }
+            }
+            plugin.teleportToCheckpoint(player);
+            player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
         } else if (plugin.inGoalArea(loc)) {
             plugin.getLogger().info(player.getName() + " crossed the finish line");
             plugin.tag.playing.remove(player.getUniqueId());
+            plugin.tag.checkpoints.remove(player.getUniqueId());
             for (Player other : plugin.getPresentPlayers()) {
                 other.sendMessage(join(noSeparators(),
                                        newline(),
@@ -184,8 +194,8 @@ public final class EventListener implements Listener {
         if (!isReadyToPlay(player, loc)) return;
         if (plugin.inSpawnArea(loc)) return;
         if (plugin.inGoalArea(loc)) return;
-        plugin.teleportToSpawn(player);
-        player.sendMessage(text("You moved! Back to the start!", DARK_RED));
+        plugin.teleportToCheckpoint(player);
+        player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
     }
 
     protected void onTick() {
@@ -196,8 +206,10 @@ public final class EventListener implements Listener {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null) {
                 plugin.tag.playing.remove(uuid);
+                plugin.tag.checkpoints.remove(uuid);
             } else if (!plugin.inGameArea(player.getLocation())) {
                 plugin.tag.playing.remove(uuid);
+                plugin.tag.checkpoints.remove(uuid);
                 player.hideBossBar(plugin.bossBar);
             }
         }
@@ -273,7 +285,7 @@ public final class EventListener implements Listener {
                 plugin.teleportToSpawn(player);
             }
         }
-        if ((plugin.tag.ticks % 100) == 0) {
+        if ((plugin.tag.ticks % 60) == 0) {
             for (Cuboid creeperArea : plugin.creeperAreas) {
                 Vec3i vec = creeperArea.min;
                 if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
@@ -285,6 +297,36 @@ public final class EventListener implements Listener {
                         c.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
                     });
                 plugin.creeperMap.put(vec, creeper);
+            }
+            for (Cuboid snowmanArea : plugin.snowmanAreas) {
+                Vec3i vec = snowmanArea.min;
+                if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
+                Snowman snowman = plugin.snowmanMap.get(vec);
+                if (snowman != null && !snowman.isDead()) {
+                    Location sloc = snowman.getLocation();
+                    List<Player> targets = new ArrayList<>();
+                    for (Player player : players) {
+                        if (!plugin.tag.playing.contains(player.getUniqueId())) continue;
+                        Location ploc = player.getLocation();
+                        if (!ploc.getWorld().equals(sloc.getWorld())) continue;
+                        if (ploc.distanceSquared(sloc) > 100.0) continue;
+                        if (!snowman.hasLineOfSight(player)) continue;
+                        targets.add(player);
+                    }
+                    if (targets.isEmpty()) continue;
+                    Player target = targets.get(plugin.random.nextInt(targets.size()));
+                    Vector v = target.getEyeLocation().subtract(snowman.getEyeLocation()).toVector().normalize();
+                    sloc.setDirection(v);
+                    snowman.teleport(sloc);
+                    snowman.launchProjectile(Arrow.class, v.multiply(2.0));
+                    continue;
+                }
+                snowman = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Snowman.class, c -> {
+                        c.setPersistent(false);
+                        c.setRemoveWhenFarAway(false);
+                        c.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+                    });
+                plugin.snowmanMap.put(vec, snowman);
             }
         }
         if ((plugin.tag.ticks % 20) == 0) {
@@ -384,13 +426,14 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
-    private void onPlayerSidebar(PlayerSidebarEvent event) {
+    private void onPlayerHud(PlayerHudEvent event) {
         if (!plugin.tag.started) return;
         Player player = event.getPlayer();
         if (!plugin.inGameArea(player.getLocation())) return;
         List<Component> lines = new ArrayList<>();
         lines.add(plugin.TITLE);
         lines.add(join(noSeparators(), text(tiny("light "), GRAY), plugin.tag.light.toComponent().decorate(BOLD)));
+        lines.add(join(noSeparators(), text(tiny("lives "), GRAY), Mytems.HEART, text(plugin.tag.lives.getOrDefault(player.getUniqueId(), 0), RED)));
         lines.add(join(noSeparators(), text(tiny("players "), GRAY), text(plugin.tag.playing.size(), GREEN)));
         int wins = plugin.tag.getCompletions(player.getUniqueId());
         if (wins > 0) {
@@ -399,7 +442,10 @@ public final class EventListener implements Listener {
         if (plugin.tag.event) {
             lines.addAll(Highscore.sidebar(plugin.highscore));
         }
-        event.add(plugin, Priority.HIGHEST, lines);
+        event.sidebar(PlayerHudPriority.HIGHEST, lines);
+        event.bossbar(PlayerHudPriority.HIGH,
+                      plugin.bossBar.name(), plugin.bossBar.color(), plugin.bossBar.overlay(),
+                      plugin.bossBar.progress());
     }
 
     @EventHandler
@@ -415,5 +461,26 @@ public final class EventListener implements Listener {
         if (plugin.inGameArea(event.getLocation())) {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    private void onPlayerInteract(PlayerInteractEvent event) {
+        switch (event.getAction()) {
+        case RIGHT_CLICK_BLOCK: case LEFT_CLICK_BLOCK: break;
+        default: return;
+        }
+        if (!plugin.tag.started) return;
+        Player player = event.getPlayer();
+        if (!plugin.tag.playing.contains(player.getUniqueId())) return;
+        if (!plugin.inGameArea(player.getLocation())) return;
+        if (!event.hasBlock()) return;
+        if (event.getClickedBlock().getType() != Material.RESPAWN_ANCHOR) return;
+        event.setCancelled(true);
+        Vec3i vec = Vec3i.of(event.getClickedBlock());
+        if (vec.equals(plugin.tag.checkpoints.get(player.getUniqueId()))) return;
+        plugin.tag.checkpoints.put(player.getUniqueId(), vec);
+        plugin.tag.lives.put(player.getUniqueId(), 10);
+        player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.MASTER, 1.0f, 2.0f);
+        player.sendMessage(text("Checkpoint set!", GREEN));
     }
 }

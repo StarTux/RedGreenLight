@@ -1,5 +1,6 @@
 package com.cavetale.redgreenlight;
 
+import com.cavetale.area.struct.Vec3i;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -16,6 +17,8 @@ public final class Tag {
     protected boolean event;
     protected Map<UUID, Integer> completions = new HashMap<>();
     protected Set<UUID> playing = new HashSet<>();
+    protected Map<UUID, Vec3i> checkpoints = new HashMap<>();
+    protected Map<UUID, Integer> lives = new HashMap<>();
 
     public int getCompletions(UUID uuid) {
         return completions.getOrDefault(uuid, 0);

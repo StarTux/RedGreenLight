@@ -8,6 +8,8 @@ import com.cavetale.fam.trophy.Highscore;
 import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.trophy.TrophyCategory;
 import java.io.File;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +25,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Snowman;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -43,12 +46,15 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     protected List<Cuboid> goalAreas;
     protected List<Cuboid> warpAreas;
     protected List<Cuboid> creeperAreas;
+    protected List<Cuboid> snowmanAreas;
     protected List<Cuboid> dispenserAreas;
     protected List<Cuboid> campfireAreas;
     protected BukkitTask task;
     protected boolean teleporting;
     protected final Map<Vec3i, Creeper> creeperMap = new HashMap<>();
+    protected final Map<Vec3i, Snowman> snowmanMap = new HashMap<>();
     protected List<Highscore> highscore = List.of();
+    private Map<UUID, Instant> invincibility = new HashMap<>();
     public static final Component TITLE = join(noSeparators(),
                                                Mytems.TRAFFIC_LIGHT.component,
                                                text(tiny("Red"), color(0xFF0000)),
@@ -72,17 +78,13 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     }
 
     protected void load() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.hideBossBar(bossBar);
-        }
         loadTag();
         loadAreas();
         for (UUID uuid : List.copyOf(tag.playing)) {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null || !inGameArea(player.getLocation())) {
                 tag.playing.remove(uuid);
-            } else {
-                player.showBossBar(bossBar);
+                tag.checkpoints.remove(uuid);
             }
         }
     }
@@ -103,9 +105,10 @@ public final class RedGreenLightPlugin extends JavaPlugin {
             creeper.remove();
         }
         creeperMap.clear();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.hideBossBar(bossBar);
+        for (Snowman snowman : snowmanMap.values()) {
+            snowman.remove();
         }
+        snowmanMap.clear();
     }
 
     protected void saveTag() {
@@ -119,6 +122,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         goalAreas = List.of();
         warpAreas = List.of();
         creeperAreas = List.of();
+        snowmanAreas = List.of();
         dispenserAreas = List.of();
         campfireAreas = List.of();
         World w = getWorld();
@@ -136,6 +140,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         this.goalAreas = areasFile.find("goal");
         this.warpAreas = areasFile.find("warp");
         this.creeperAreas = areasFile.find("creeper");
+        this.snowmanAreas = areasFile.find("snowman");
         this.dispenserAreas = areasFile.find("dispenser");
         this.campfireAreas = areasFile.find("campfire");
     }
@@ -200,6 +205,34 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         teleporting = false;
         player.setFallDistance(0);
         addPlaying(player);
+        tag.checkpoints.remove(player.getUniqueId());
+        tag.lives.remove(player.getUniqueId());
+    }
+
+    protected void teleportToCheckpoint(Player player) {
+        Instant invincible = invincibility.get(player.getUniqueId());
+        if (invincible == null || invincible.toEpochMilli() < Instant.now().toEpochMilli()) {
+            int lives = tag.lives.getOrDefault(player.getUniqueId(), 0);
+            if (lives == 0) {
+                player.sendMessage(text("Game Over!", DARK_RED));
+                teleportToSpawn(player);
+                return;
+            }
+            tag.lives.put(player.getUniqueId(), lives - 1);
+            invincibility.put(player.getUniqueId(), Instant.now().plus(Duration.ofSeconds(3)));
+        }
+        Vec3i checkpoint = tag.checkpoints.get(player.getUniqueId());
+        if (checkpoint == null) {
+            teleportToSpawn(player);
+            return;
+        }
+        Location location = checkpoint.toLocation(getWorld()).add(0.0, 1.0, 0.0);
+        Location ploc = player.getLocation();
+        location.setPitch(ploc.getPitch());
+        location.setYaw(ploc.getYaw());
+        teleporting = true;
+        player.teleport(location);
+        teleporting = false;
     }
 
     protected void addPlaying(Player player) {
@@ -208,7 +241,6 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         if (tag.event) {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
         }
-        player.showBossBar(bossBar);
     }
 
     protected void startTicking() {
