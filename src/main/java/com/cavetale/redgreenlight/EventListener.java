@@ -150,13 +150,7 @@ public final class EventListener implements Listener {
         }
         if (plugin.tag.light == Light.RED) {
             if (plugin.inGoalArea(loc)) return;
-            Vec3i checkpoint = plugin.tag.checkpoints.get(player.getUniqueId());
-            if (checkpoint != null) {
-                Vec3i pvec = Vec3i.of(player.getLocation());
-                if (pvec.equals(checkpoint) || pvec.add(0, -1, 0).equals(checkpoint)) {
-                    return;
-                }
-            }
+            if (plugin.isAtCheckpoint(player)) return;
             plugin.teleportToCheckpoint(player);
             player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
         } else if (plugin.inGoalArea(loc)) {
@@ -194,6 +188,7 @@ public final class EventListener implements Listener {
         if (!isReadyToPlay(player, loc)) return;
         if (plugin.inSpawnArea(loc)) return;
         if (plugin.inGoalArea(loc)) return;
+        if (plugin.isAtCheckpoint(player)) return;
         plugin.teleportToCheckpoint(player);
         player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
     }

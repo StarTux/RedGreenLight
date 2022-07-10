@@ -166,6 +166,13 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         return inArea(goalAreas, location);
     }
 
+    protected boolean isAtCheckpoint(Player player) {
+        Vec3i checkpoint = tag.checkpoints.get(player.getUniqueId());
+        if (checkpoint == null) return false;
+        Vec3i pvec = Vec3i.of(player.getLocation());
+        return pvec.equals(checkpoint) || pvec.add(0, -1, 0).equals(checkpoint);
+    }
+
     public List<Player> getPresentPlayers() {
         World world = Bukkit.getWorld(tag.world);
         if (world == null) return List.of();
