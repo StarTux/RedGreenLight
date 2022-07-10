@@ -489,6 +489,6 @@ public final class EventListener implements Listener {
         if (event.getCause() != EntityDamageEvent.DamageCause.VOID) return;
         plugin.getLogger().info(player.getName() + " void damage");
         event.setCancelled(true);
-        Bukkit.getScheduler().runTask(plugin, () -> plugin.teleportToSpawn(player));
+        Bukkit.getScheduler().runTask(plugin, () -> plugin.teleportToCheckpoint(player));
     }
 }
