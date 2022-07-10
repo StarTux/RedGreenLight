@@ -37,6 +37,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Snowman;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -202,10 +203,9 @@ public final class EventListener implements Listener {
             if (player == null) {
                 plugin.tag.playing.remove(uuid);
                 plugin.tag.checkpoints.remove(uuid);
-            } else if (!plugin.inGameArea(player.getLocation())) {
+            } else if (!plugin.isGameWorld(player.getWorld())) {
                 plugin.tag.playing.remove(uuid);
                 plugin.tag.checkpoints.remove(uuid);
-                player.hideBossBar(plugin.bossBar);
             }
         }
         // Tick players
@@ -446,8 +446,9 @@ public final class EventListener implements Listener {
     @EventHandler
     private void onPlayerRespawn(PlayerRespawnEvent event) {
         if (!plugin.tag.started) return;
-        if (!plugin.tag.playing.contains(event.getPlayer().getUniqueId())) return;
-        if (!plugin.inGameArea(event.getPlayer().getLocation())) return;
+        Player player = event.getPlayer();
+        if (!plugin.tag.playing.contains(player.getUniqueId())) return;
+        if (!plugin.isGameWorld(player.getWorld())) return;
         event.setRespawnLocation(plugin.randomSpawnLocation());
     }
 
@@ -477,5 +478,17 @@ public final class EventListener implements Listener {
         plugin.tag.lives.put(player.getUniqueId(), 10);
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.MASTER, 1.0f, 2.0f);
         player.sendMessage(text("Checkpoint set!", GREEN));
+    }
+
+    @EventHandler
+    private void onEntityDamage(EntityDamageEvent event) {
+        if (!plugin.tag.started) return;
+        if (!(event instanceof Player player)) return;
+        if (!plugin.tag.playing.contains(player.getUniqueId())) return;
+        if (!plugin.isGameWorld(player.getWorld())) return;
+        if (event.getCause() == EntityDamageEvent.DamageCause.VOID) {
+            event.setCancelled(true);
+            plugin.teleportToSpawn(player);
+        }
     }
 }

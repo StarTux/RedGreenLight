@@ -154,6 +154,10 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         return false;
     }
 
+    public boolean isGameWorld(World world) {
+        return tag.world.equals(world.getName());
+    }
+
     public boolean inGameArea(Location location) {
         return inArea(gameAreas, location);
     }
