@@ -112,6 +112,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     }
 
     protected void saveTag() {
+        getDataFolder().mkdirs();
         File file = new File(getDataFolder(), "save.json");
         Json.save(file, tag);
     }
