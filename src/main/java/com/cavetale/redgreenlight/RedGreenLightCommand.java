@@ -73,9 +73,12 @@ public final class RedGreenLightCommand extends AbstractCommand<RedGreenLightPlu
                 });
 
         rootNode.addChild("reset").denyTabCompletion()
-            .description("Reset completions")
+            .description("Reset player progress")
             .senderCaller(sender -> {
                     plugin.tag.completions.clear();
+                    plugin.tag.playing.clear();
+                    plugin.tag.checkpoints.clear();
+                    plugin.tag.lives.clear();
                     plugin.saveTag();
                     plugin.computeHighscore();
                     sender.sendMessage(text("Completions were reset!", AQUA));
