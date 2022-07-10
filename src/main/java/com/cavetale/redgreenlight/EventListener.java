@@ -425,7 +425,7 @@ public final class EventListener implements Listener {
     private void onPlayerHud(PlayerHudEvent event) {
         if (!plugin.tag.started) return;
         Player player = event.getPlayer();
-        if (!plugin.inGameArea(player.getLocation())) return;
+        if (!plugin.isGameWorld(player.getWorld())) return;
         List<Component> lines = new ArrayList<>();
         lines.add(plugin.TITLE);
         lines.add(join(noSeparators(), text(tiny("light "), GRAY), plugin.tag.light.toComponent().decorate(BOLD)));
@@ -484,12 +484,11 @@ public final class EventListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     private void onEntityDamage(EntityDamageEvent event) {
         if (!plugin.tag.started) return;
-        if (!(event instanceof Player player)) return;
-        if (!plugin.tag.playing.contains(player.getUniqueId())) return;
+        if (!(event.getEntity() instanceof Player player)) return;
         if (!plugin.isGameWorld(player.getWorld())) return;
-        if (event.getCause() == EntityDamageEvent.DamageCause.VOID) {
-            event.setCancelled(true);
-            plugin.teleportToSpawn(player);
-        }
+        if (event.getCause() != EntityDamageEvent.DamageCause.VOID) return;
+        plugin.getLogger().info(player.getName() + " void damage");
+        event.setCancelled(true);
+        Bukkit.getScheduler().runTask(plugin, () -> plugin.teleportToSpawn(player));
     }
 }
