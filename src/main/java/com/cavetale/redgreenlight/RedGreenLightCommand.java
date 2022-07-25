@@ -2,7 +2,7 @@ package com.cavetale.redgreenlight;
 
 import com.cavetale.core.command.AbstractCommand;
 import com.cavetale.core.command.CommandArgCompleter;
-import com.winthier.playercache.PlayerCache;
+import com.cavetale.core.playercache.PlayerCache;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import static java.util.stream.Collectors.toList;
