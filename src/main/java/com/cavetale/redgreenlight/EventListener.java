@@ -1,9 +1,9 @@
 package com.cavetale.redgreenlight;
 
-import com.cavetale.area.struct.Cuboid;
-import com.cavetale.area.struct.Vec3i;
 import com.cavetale.core.event.hud.PlayerHudEvent;
 import com.cavetale.core.event.hud.PlayerHudPriority;
+import com.cavetale.core.struct.Cuboid;
+import com.cavetale.core.struct.Vec3i;
 import com.cavetale.fam.trophy.Highscore;
 import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.WardrobeItem;
@@ -283,7 +283,7 @@ public final class EventListener implements Listener {
         }
         if ((plugin.tag.ticks % 60) == 0) {
             for (Cuboid creeperArea : plugin.creeperAreas) {
-                Vec3i vec = creeperArea.min;
+                Vec3i vec = creeperArea.getMin();
                 if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
                 Creeper creeper = plugin.creeperMap.get(vec);
                 if (creeper != null && !creeper.isDead()) continue;
@@ -295,7 +295,7 @@ public final class EventListener implements Listener {
                 plugin.creeperMap.put(vec, creeper);
             }
             for (Cuboid snowmanArea : plugin.snowmanAreas) {
-                Vec3i vec = snowmanArea.min;
+                Vec3i vec = snowmanArea.getMin();
                 if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
                 Snowman snowman = plugin.snowmanMap.get(vec);
                 if (snowman != null && !snowman.isDead()) {
@@ -327,7 +327,7 @@ public final class EventListener implements Listener {
         }
         if ((plugin.tag.ticks % 20) == 0) {
             for (Cuboid dispenserArea : plugin.dispenserAreas) {
-                Vec3i vec = dispenserArea.min;
+                Vec3i vec = dispenserArea.getMin();
                 if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
                 Block block = vec.toBlock(w);
                 BlockData bdata = block.getBlockData();

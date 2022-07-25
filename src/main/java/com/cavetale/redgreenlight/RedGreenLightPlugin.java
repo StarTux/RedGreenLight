@@ -1,8 +1,9 @@
 package com.cavetale.redgreenlight;
 
+import com.cavetale.area.struct.Area;
 import com.cavetale.area.struct.AreasFile;
-import com.cavetale.area.struct.Cuboid;
-import com.cavetale.area.struct.Vec3i;
+import com.cavetale.core.struct.Cuboid;
+import com.cavetale.core.struct.Vec3i;
 import com.cavetale.core.util.Json;
 import com.cavetale.fam.trophy.Highscore;
 import com.cavetale.mytems.Mytems;
@@ -136,14 +137,23 @@ public final class RedGreenLightPlugin extends JavaPlugin {
             getLogger().warning("Areas not found: " + tag.world + "/RedGreenLight");
             return;
         }
-        this.gameAreas = areasFile.find("area");
-        this.spawnAreas = areasFile.find("spawn");
-        this.goalAreas = areasFile.find("goal");
-        this.warpAreas = areasFile.find("warp");
-        this.creeperAreas = areasFile.find("creeper");
-        this.snowmanAreas = areasFile.find("snowman");
-        this.dispenserAreas = areasFile.find("dispenser");
-        this.campfireAreas = areasFile.find("campfire");
+        this.gameAreas = toCuboid(areasFile.find("area"));
+        this.spawnAreas = toCuboid(areasFile.find("spawn"));
+        this.goalAreas = toCuboid(areasFile.find("goal"));
+        this.warpAreas = toCuboid(areasFile.find("warp"));
+        this.creeperAreas = toCuboid(areasFile.find("creeper"));
+        this.snowmanAreas = toCuboid(areasFile.find("snowman"));
+        this.dispenserAreas = toCuboid(areasFile.find("dispenser"));
+        this.campfireAreas = toCuboid(areasFile.find("campfire"));
+    }
+
+    private static List<Cuboid> toCuboid(Iterable<Area> areas) {
+        if (areas == null) return List.of();
+        List<Cuboid> result = new ArrayList<>();
+        for (Area area : areas) {
+            result.add(area.toCuboid());
+        }
+        return result;
     }
 
     public boolean inArea(List<Cuboid> areaList, Location location) {

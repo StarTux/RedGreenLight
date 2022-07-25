@@ -1,6 +1,6 @@
 package com.cavetale.redgreenlight;
 
-import com.cavetale.area.struct.Vec3i;
+import com.cavetale.core.struct.Vec3i;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
