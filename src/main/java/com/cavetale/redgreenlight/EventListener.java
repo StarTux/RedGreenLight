@@ -225,14 +225,14 @@ public final class EventListener implements Listener {
             if (plugin.tag.light == Light.GREEN) {
                 plugin.tag.light = Light.YELLOW;
                 plugin.tag.totalCooldown = 30;
-                plugin.tag.cooldown = 20;
+                plugin.tag.cooldown = plugin.tag.totalCooldown;
                 for (Player player : players) {
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.MASTER, 0.5f, 0.5f);
                 }
             } else if (plugin.tag.light == Light.YELLOW) {
                 plugin.tag.light = Light.RED;
-                plugin.tag.totalCooldown = 100;
-                plugin.tag.cooldown = 100;
+                plugin.tag.totalCooldown = 100 + plugin.random.nextInt(40) - plugin.random.nextInt(40);
+                plugin.tag.cooldown = plugin.tag.totalCooldown;
                 Title title = title(Light.RED.toComponent(),
                                     text("Stop Moving", DARK_RED),
                                     times(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
