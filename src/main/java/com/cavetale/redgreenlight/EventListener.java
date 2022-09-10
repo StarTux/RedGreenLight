@@ -226,6 +226,9 @@ public final class EventListener implements Listener {
                 plugin.tag.light = Light.YELLOW;
                 plugin.tag.totalCooldown = 30;
                 plugin.tag.cooldown = 20;
+                for (Player player : players) {
+                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.MASTER, 0.5f, 0.5f);
+                }
             } else if (plugin.tag.light == Light.YELLOW) {
                 plugin.tag.light = Light.RED;
                 plugin.tag.totalCooldown = 100;
