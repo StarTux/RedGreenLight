@@ -248,7 +248,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
             teleportToSpawn(player);
             return;
         }
-        Location location = checkpoint.toLocation(getWorld()).add(0.0, 1.0, 0.0);
+        Location location = checkpoint.toLocation(getWorld()).add(0.5, 1.0, 0.5);
         Location ploc = player.getLocation();
         location.setPitch(ploc.getPitch());
         location.setYaw(ploc.getYaw());

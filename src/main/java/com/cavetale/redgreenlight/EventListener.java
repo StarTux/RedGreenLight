@@ -125,6 +125,7 @@ public final class EventListener implements Listener {
         }
         for (PotionEffectType pot : PotionEffectType.values()) {
             if (player.hasPotionEffect(pot)) {
+                player.removePotionEffect(pot);
                 player.sendMessage(text("No potion effects!", DARK_RED));
                 plugin.teleportToSpawn(player);
                 return;
