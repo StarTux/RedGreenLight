@@ -224,7 +224,7 @@ public final class EventListener implements Listener {
             plugin.tag.cooldown = 0;
             if (plugin.tag.light == Light.GREEN) {
                 plugin.tag.light = Light.YELLOW;
-                plugin.tag.totalCooldown = 20;
+                plugin.tag.totalCooldown = 30;
                 plugin.tag.cooldown = 20;
             } else if (plugin.tag.light == Light.YELLOW) {
                 plugin.tag.light = Light.RED;
