@@ -35,6 +35,7 @@ import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Snowman;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -472,10 +473,12 @@ public final class EventListener implements Listener {
         }
         if (!plugin.tag.started) return;
         Player player = event.getPlayer();
+        if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE) return;
         if (!plugin.tag.playing.contains(player.getUniqueId())) return;
         if (!plugin.inGameArea(player.getLocation())) return;
         if (!event.hasBlock()) return;
         if (event.getClickedBlock().getType() != Material.RESPAWN_ANCHOR) return;
+        event.setUseInteractedBlock(Event.Result.DENY);
         event.setCancelled(true);
         Vec3i vec = Vec3i.of(event.getClickedBlock());
         if (vec.equals(plugin.tag.checkpoints.get(player.getUniqueId()))) return;
