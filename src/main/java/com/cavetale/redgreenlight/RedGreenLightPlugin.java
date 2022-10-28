@@ -25,7 +25,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Snowman;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -50,10 +52,14 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     protected List<Cuboid> snowmanAreas;
     protected List<Cuboid> dispenserAreas;
     protected List<Cuboid> campfireAreas;
+    protected List<Cuboid> skeletonAreas;
+    protected List<Cuboid> ghastAreas;
     protected BukkitTask task;
     protected boolean teleporting;
     protected final Map<Vec3i, Creeper> creeperMap = new HashMap<>();
     protected final Map<Vec3i, Snowman> snowmanMap = new HashMap<>();
+    protected final Map<Vec3i, Skeleton> skeletonMap = new HashMap<>();
+    protected final Map<Vec3i, Ghast> ghastMap = new HashMap<>();
     protected List<Highscore> highscore = List.of();
     private Map<UUID, Instant> invincibility = new HashMap<>();
     public static final Component TITLE = join(noSeparators(),
@@ -110,6 +116,14 @@ public final class RedGreenLightPlugin extends JavaPlugin {
             snowman.remove();
         }
         snowmanMap.clear();
+        for (Skeleton skeleton : skeletonMap.values()) {
+            skeleton.remove();
+        }
+        skeletonMap.clear();
+        for (Ghast ghast : ghastMap.values()) {
+            ghast.remove();
+        }
+        ghastMap.clear();
     }
 
     protected void saveTag() {
@@ -125,6 +139,8 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         warpAreas = List.of();
         creeperAreas = List.of();
         snowmanAreas = List.of();
+        skeletonAreas = List.of();
+        ghastAreas = List.of();
         dispenserAreas = List.of();
         campfireAreas = List.of();
         World w = getWorld();
@@ -145,6 +161,8 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         this.snowmanAreas = toCuboid(areasFile.find("snowman"));
         this.dispenserAreas = toCuboid(areasFile.find("dispenser"));
         this.campfireAreas = toCuboid(areasFile.find("campfire"));
+        this.skeletonAreas = toCuboid(areasFile.find("skeleton"));
+        this.ghastAreas = toCuboid(areasFile.find("ghast"));
     }
 
     private static List<Cuboid> toCuboid(Iterable<Area> areas) {

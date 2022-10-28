@@ -32,8 +32,10 @@ import org.bukkit.block.data.type.Campfire;
 import org.bukkit.block.data.type.Dispenser;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Snowman;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -299,6 +301,30 @@ public final class EventListener implements Listener {
                     });
                 plugin.creeperMap.put(vec, creeper);
             }
+            for (Cuboid skeletonArea : plugin.skeletonAreas) {
+                Vec3i vec = skeletonArea.getMin();
+                if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
+                Skeleton skeleton = plugin.skeletonMap.get(vec);
+                if (skeleton != null && !skeleton.isDead()) continue;
+                skeleton = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Skeleton.class, s -> {
+                        s.setPersistent(false);
+                        s.setRemoveWhenFarAway(false);
+                        s.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+                    });
+                plugin.skeletonMap.put(vec, skeleton);
+            }
+            for (Cuboid ghastArea : plugin.ghastAreas) {
+                Vec3i vec = ghastArea.getMin();
+                if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
+                Ghast ghast = plugin.ghastMap.get(vec);
+                if (ghast != null && !ghast.isDead()) continue;
+                ghast = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Ghast.class, g -> {
+                        g.setPersistent(false);
+                        g.setRemoveWhenFarAway(false);
+                        g.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+                    });
+                plugin.ghastMap.put(vec, ghast);
+            }
             for (Cuboid snowmanArea : plugin.snowmanAreas) {
                 Vec3i vec = snowmanArea.getMin();
                 if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
@@ -322,10 +348,10 @@ public final class EventListener implements Listener {
                     snowman.launchProjectile(Arrow.class, v.multiply(2.0));
                     continue;
                 }
-                snowman = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Snowman.class, c -> {
-                        c.setPersistent(false);
-                        c.setRemoveWhenFarAway(false);
-                        c.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+                snowman = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Snowman.class, s -> {
+                        s.setPersistent(false);
+                        s.setRemoveWhenFarAway(false);
+                        s.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
                     });
                 plugin.snowmanMap.put(vec, snowman);
             }
