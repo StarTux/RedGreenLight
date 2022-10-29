@@ -1,5 +1,6 @@
 package com.cavetale.redgreenlight;
 
+import com.cavetale.core.event.block.PlayerBlockAbilityQuery;
 import com.cavetale.core.event.hud.PlayerHudEvent;
 import com.cavetale.core.event.hud.PlayerHudPriority;
 import com.cavetale.core.struct.Cuboid;
@@ -523,5 +524,14 @@ public final class EventListener implements Listener {
         plugin.getLogger().info(player.getName() + " void damage");
         event.setCancelled(true);
         Bukkit.getScheduler().runTask(plugin, () -> plugin.teleportToCheckpoint(player));
+    }
+
+    @EventHandler
+    private void onPlayerBlockAbility(PlayerBlockAbilityQuery query) {
+        if (!plugin.tag.started) return;
+        Player player = query.getPlayer();
+        if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE) return;
+        if (!plugin.isGameWorld(player.getWorld())) return;
+        query.setCancelled(true);
     }
 }
