@@ -510,7 +510,7 @@ public final class EventListener implements Listener {
         Vec3i vec = Vec3i.of(event.getClickedBlock());
         if (vec.equals(plugin.tag.checkpoints.get(player.getUniqueId()))) return;
         plugin.tag.checkpoints.put(player.getUniqueId(), vec);
-        plugin.tag.lives.put(player.getUniqueId(), 10);
+        plugin.tag.lives.put(player.getUniqueId(), 9);
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.MASTER, 1.0f, 2.0f);
         player.sendMessage(text("Checkpoint set!", GREEN));
     }

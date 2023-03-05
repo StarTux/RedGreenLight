@@ -253,7 +253,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         Instant invincible = invincibility.get(player.getUniqueId());
         if (invincible == null || invincible.toEpochMilli() < Instant.now().toEpochMilli()) {
             int lives = tag.lives.getOrDefault(player.getUniqueId(), 0);
-            if (lives == 0) {
+            if (lives <= 1) {
                 player.sendMessage(text("Game Over!", DARK_RED));
                 teleportToSpawn(player);
                 return;
