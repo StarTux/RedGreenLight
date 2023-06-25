@@ -54,6 +54,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     protected List<Cuboid> campfireAreas;
     protected List<Cuboid> skeletonAreas;
     protected List<Cuboid> ghastAreas;
+    protected List<Vec3i> checkpoints;
     protected BukkitTask task;
     protected boolean teleporting;
     protected final Map<Vec3i, Creeper> creeperMap = new HashMap<>();
@@ -61,7 +62,8 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     protected final Map<Vec3i, Skeleton> skeletonMap = new HashMap<>();
     protected final Map<Vec3i, Ghast> ghastMap = new HashMap<>();
     protected List<Highscore> highscore = List.of();
-    private Map<UUID, Instant> invincibility = new HashMap<>();
+    protected Map<UUID, Instant> invincibility = new HashMap<>();
+    protected Map<UUID, Integer> backwardsTicks = new HashMap<>();
     public static final Component TITLE = join(noSeparators(),
                                                Mytems.TRAFFIC_LIGHT.component,
                                                text(tiny("Red"), color(0xFF0000)),
@@ -163,6 +165,10 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         this.campfireAreas = toCuboid(areasFile.find("campfire"));
         this.skeletonAreas = toCuboid(areasFile.find("skeleton"));
         this.ghastAreas = toCuboid(areasFile.find("ghast"));
+        this.checkpoints = new ArrayList<>();
+        for (Cuboid cuboid : toCuboid(areasFile.find("checkpoint"))) {
+            checkpoints.add(cuboid.getMin());
+        }
     }
 
     private static List<Cuboid> toCuboid(Iterable<Area> areas) {
@@ -199,8 +205,9 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     }
 
     protected boolean isAtCheckpoint(Player player) {
-        Vec3i checkpoint = tag.checkpoints.get(player.getUniqueId());
-        if (checkpoint == null) return false;
+        int checkpointIndex = tag.checkpoints.getOrDefault(player.getUniqueId(), -1);
+        if (checkpointIndex < 0 || checkpointIndex >= checkpoints.size()) return false;
+        Vec3i checkpoint = checkpoints.get(checkpointIndex);
         Vec3i pvec = Vec3i.of(player.getLocation());
         return pvec.equals(checkpoint) || pvec.add(0, -1, 0).equals(checkpoint);
     }
@@ -246,26 +253,19 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         player.setFallDistance(0);
         addPlaying(player);
         tag.checkpoints.remove(player.getUniqueId());
-        tag.lives.remove(player.getUniqueId());
     }
 
     protected void teleportToCheckpoint(Player player) {
         Instant invincible = invincibility.get(player.getUniqueId());
         if (invincible == null || invincible.toEpochMilli() < Instant.now().toEpochMilli()) {
-            int lives = tag.lives.getOrDefault(player.getUniqueId(), 0);
-            if (lives <= 1) {
-                player.sendMessage(text("Game Over!", DARK_RED));
-                teleportToSpawn(player);
-                return;
-            }
-            tag.lives.put(player.getUniqueId(), lives - 1);
             invincibility.put(player.getUniqueId(), Instant.now().plus(Duration.ofSeconds(3)));
         }
-        Vec3i checkpoint = tag.checkpoints.get(player.getUniqueId());
-        if (checkpoint == null) {
+        int checkpointIndex = tag.checkpoints.getOrDefault(player.getUniqueId(), -1);
+        if (checkpointIndex < 0 || checkpointIndex >= checkpoints.size()) {
             teleportToSpawn(player);
             return;
         }
+        Vec3i checkpoint = checkpoints.get(checkpointIndex);
         Location location = checkpoint.toLocation(getWorld()).add(0.5, 1.0, 0.5);
         Location ploc = player.getLocation();
         location.setPitch(ploc.getPitch());
@@ -273,6 +273,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         teleporting = true;
         player.teleport(location);
         teleporting = false;
+        tag.addScores(player.getUniqueId(), -1);
     }
 
     protected void addPlaying(Player player) {
@@ -299,11 +300,11 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     }
 
     protected int rewardHighscore() {
-        return Highscore.reward(tag.completions,
+        return Highscore.reward(tag.scores,
                                 "red_light_green_light",
                                 TrophyCategory.RED_GREEN_LIGHT,
                                 TITLE,
-                                hi -> ("You defeated the Red Light Green Light track "
-                                       + hi.score + " time" + (hi.score == 1 ? "" : "s")));
+                                hi -> ("You played Red Light Green Light with "
+                                       + hi.score + " point" + (hi.score == 1 ? "" : "s")));
     }
 }

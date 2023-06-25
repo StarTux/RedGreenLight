@@ -13,8 +13,8 @@ softdepend: []
 
 commands:
 
-  redgreenlight:
-    aliases: []
+  redgreenlightadmin:
+    aliases: [rlgladm]
     description: Admin Interface
     permission: redgreenlight.admin
     usage: /redgreenlight

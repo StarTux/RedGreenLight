@@ -11,7 +11,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public final class RedGreenLightCommand extends AbstractCommand<RedGreenLightPlugin> {
     protected RedGreenLightCommand(final RedGreenLightPlugin plugin) {
-        super(plugin, "redgreenlight");
+        super(plugin, "redgreenlightadmin");
     }
 
     @Override
@@ -78,7 +78,6 @@ public final class RedGreenLightCommand extends AbstractCommand<RedGreenLightPlu
                     plugin.tag.completions.clear();
                     plugin.tag.playing.clear();
                     plugin.tag.checkpoints.clear();
-                    plugin.tag.lives.clear();
                     plugin.saveTag();
                     plugin.computeHighscore();
                     sender.sendMessage(text("Completions were reset!", AQUA));

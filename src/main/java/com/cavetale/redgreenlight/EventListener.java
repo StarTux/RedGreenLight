@@ -56,10 +56,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 import static com.cavetale.core.font.Unicode.tiny;
-import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 import static net.kyori.adventure.title.Title.Times.times;
@@ -165,15 +164,15 @@ public final class EventListener implements Listener {
             plugin.tag.playing.remove(player.getUniqueId());
             plugin.tag.checkpoints.remove(player.getUniqueId());
             for (Player other : plugin.getPresentPlayers()) {
-                other.sendMessage(join(noSeparators(),
-                                       newline(),
-                                       text(player.getName() + " crossed the finish line!", GREEN),
-                                       newline()));
+                other.sendMessage(textOfChildren(newline(),
+                                                 text(player.getName() + " crossed the finish line!", GREEN),
+                                                 newline()));
             }
             player.showTitle(title(text("Winner!", GREEN),
                                    text("You win the game!", GREEN)));
             player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.MASTER, 0.5f, 2.0f);
             plugin.tag.addCompletions(player.getUniqueId(), 1);
+            plugin.tag.addScores(player.getUniqueId(), 10);
             plugin.computeHighscore();
             plugin.saveTag();
             if (plugin.tag.event) {
@@ -258,7 +257,7 @@ public final class EventListener implements Listener {
                 }
             }
             plugin.bossBar.color(plugin.tag.light.bossBarColor);
-            plugin.bossBar.name(join(noSeparators(), Mytems.TRAFFIC_LIGHT.component, plugin.tag.light.toComponent()));
+            plugin.bossBar.name(textOfChildren(Mytems.TRAFFIC_LIGHT.component, plugin.tag.light.toComponent()));
             if (plugin.tag.light == Light.RED) {
                 plugin.bossBar.flags(Set.of(BossBar.Flag.CREATE_WORLD_FOG, BossBar.Flag.DARKEN_SCREEN));
                 plugin.bossBar.progress(0.0f);
@@ -288,6 +287,7 @@ public final class EventListener implements Listener {
                 player.sendMessage(text("No riding!", DARK_RED));
                 plugin.teleportToSpawn(player);
             }
+            sendDirections(player);
         }
         if ((plugin.tag.ticks % 60) == 0) {
             for (Cuboid creeperArea : plugin.creeperAreas) {
@@ -402,6 +402,46 @@ public final class EventListener implements Listener {
         plugin.tag.ticks += 1;
     }
 
+    private void sendDirections(Player player) {
+        final UUID uuid = player.getUniqueId();
+        final int checkpointIndex = plugin.tag.checkpoints.getOrDefault(uuid, -1) + 1;
+        if (checkpointIndex < 0 || checkpointIndex >= plugin.checkpoints.size()) return;
+        final Location loc = player.getLocation();
+        Vec3i pos = Vec3i.of(loc);
+        Vec3i checkpoint = plugin.checkpoints.get(checkpointIndex);
+        Vector playerDirection = loc.getDirection();
+        Vec3i direction = checkpoint.subtract(pos);
+        double playerAngle = Math.atan2(playerDirection.getZ(), playerDirection.getX());
+        double targetAngle = Math.atan2((double) direction.z, (double) direction.x);
+        boolean backwards = false;
+        if (Double.isFinite(playerAngle) && Double.isFinite(targetAngle)) {
+            double angle = targetAngle - playerAngle;
+            if (angle > Math.PI) angle -= 2.0 * Math.PI;
+            if (angle < -Math.PI) angle += 2.0 * Math.PI;
+            if (Math.abs(angle) > Math.PI * 0.5) {
+                backwards = true;
+                final int backwardsTicks = plugin.backwardsTicks.getOrDefault(uuid, 0) + 1;
+                plugin.backwardsTicks.put(uuid, backwardsTicks);
+                if (backwardsTicks > 60 && (plugin.tag.ticks % 30) < 15) {
+                    player.sendActionBar(text("TURN AROUND", DARK_RED, BOLD));
+                } else {
+                    player.sendActionBar(Mytems.ARROW_DOWN.component);
+                }
+            } else if (angle < Math.PI * -0.25) {
+                player.sendActionBar(Mytems.ARROW_LEFT.component);
+            } else if (angle > Math.PI * 0.25) {
+                player.sendActionBar(Mytems.ARROW_RIGHT.component);
+            } else if (angle < Math.PI * -0.125) {
+                player.sendActionBar(Mytems.TURN_LEFT.component);
+            } else if (angle > Math.PI * 0.125) {
+                player.sendActionBar(Mytems.TURN_RIGHT.component);
+            } else {
+                player.sendActionBar(Mytems.ARROW_UP.component);
+            }
+        }
+        if (!backwards) plugin.backwardsTicks.remove(uuid);
+    }
+
     @EventHandler
     private void onEntityToggleGlide(EntityToggleGlideEvent event) {
         if (!plugin.tag.started) return;
@@ -457,16 +497,14 @@ public final class EventListener implements Listener {
     private void onPlayerHud(PlayerHudEvent event) {
         if (!plugin.tag.started) return;
         Player player = event.getPlayer();
+        final UUID uuid = player.getUniqueId();
         if (!plugin.isGameWorld(player.getWorld())) return;
         List<Component> lines = new ArrayList<>();
         lines.add(plugin.TITLE);
-        lines.add(join(noSeparators(), text(tiny("light "), GRAY), plugin.tag.light.toComponent().decorate(BOLD)));
-        lines.add(join(noSeparators(), text(tiny("lives "), GRAY), Mytems.HEART, text(plugin.tag.lives.getOrDefault(player.getUniqueId(), 0), RED)));
-        lines.add(join(noSeparators(), text(tiny("players "), GRAY), text(plugin.tag.playing.size(), GREEN)));
-        int wins = plugin.tag.getCompletions(player.getUniqueId());
-        if (wins > 0) {
-            lines.add(join(noSeparators(), text(tiny("wins "), GRAY), text(wins, GOLD)));
-        }
+        lines.add(textOfChildren(text(tiny("light "), GRAY), plugin.tag.light.toComponent().decorate(BOLD)));
+        lines.add(textOfChildren(text(tiny("players "), GRAY), text(plugin.tag.playing.size(), GREEN)));
+        lines.add(textOfChildren(text(tiny("wins "), GRAY), text(plugin.tag.getCompletions(uuid), AQUA)));
+        lines.add(textOfChildren(text(tiny("score "), GRAY), text(plugin.tag.getScores(uuid), GOLD)));
         if (plugin.tag.event) {
             lines.addAll(Highscore.sidebar(plugin.highscore));
         }
@@ -508,11 +546,14 @@ public final class EventListener implements Listener {
         event.setUseInteractedBlock(Event.Result.DENY);
         event.setCancelled(true);
         Vec3i vec = Vec3i.of(event.getClickedBlock());
-        if (vec.equals(plugin.tag.checkpoints.get(player.getUniqueId()))) return;
-        plugin.tag.checkpoints.put(player.getUniqueId(), vec);
-        plugin.tag.lives.put(player.getUniqueId(), 9);
+        final UUID uuid = player.getUniqueId();
+        int oldCheckpointIndex = plugin.tag.checkpoints.getOrDefault(uuid, -1);
+        int checkpointIndex = plugin.checkpoints.indexOf(vec);
+        if (checkpointIndex < 0 || checkpointIndex != oldCheckpointIndex + 1) return;
+        plugin.tag.checkpoints.put(uuid, checkpointIndex);
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.MASTER, 1.0f, 2.0f);
         player.sendMessage(text("Checkpoint set!", GREEN));
+        plugin.tag.addScores(player.getUniqueId(), 5);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
