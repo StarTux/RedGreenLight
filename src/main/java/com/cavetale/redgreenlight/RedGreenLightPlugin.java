@@ -209,7 +209,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         if (checkpointIndex < 0 || checkpointIndex >= checkpoints.size()) return false;
         Vec3i checkpoint = checkpoints.get(checkpointIndex);
         Vec3i pvec = Vec3i.of(player.getLocation());
-        return pvec.equals(checkpoint) || pvec.add(0, -1, 0).equals(checkpoint);
+        return pvec.x == checkpoint.x && pvec.z == checkpoint.z;
     }
 
     public List<Player> getPresentPlayers() {
