@@ -76,6 +76,7 @@ public final class RedGreenLightCommand extends AbstractCommand<RedGreenLightPlu
             .description("Reset player progress")
             .senderCaller(sender -> {
                     plugin.tag.completions.clear();
+                    plugin.tag.scores.clear();
                     plugin.tag.playing.clear();
                     plugin.tag.checkpoints.clear();
                     plugin.saveTag();
@@ -91,7 +92,7 @@ public final class RedGreenLightCommand extends AbstractCommand<RedGreenLightPlu
                     if (args.length != 2) return false;
                     PlayerCache target = PlayerCache.require(args[0]);
                     int value = CommandArgCompleter.requireInt(args[1], i -> i != 0);
-                    plugin.tag.addCompletions(target.uuid, value);
+                    plugin.tag.addScores(target.uuid, value);
                     plugin.saveTag();
                     plugin.computeHighscore();
                     sender.sendMessage(text("Score of " + target.name + " is now "

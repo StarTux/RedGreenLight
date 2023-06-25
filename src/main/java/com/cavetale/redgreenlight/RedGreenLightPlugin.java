@@ -91,7 +91,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         loadAreas();
         for (UUID uuid : List.copyOf(tag.playing)) {
             Player player = Bukkit.getPlayer(uuid);
-            if (player == null || !inGameArea(player.getLocation())) {
+            if (player != null && !isGameWorld(player.getWorld())) {
                 tag.playing.remove(uuid);
                 tag.checkpoints.remove(uuid);
             }
@@ -253,6 +253,10 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         player.setFallDistance(0);
         addPlaying(player);
         tag.checkpoints.remove(player.getUniqueId());
+        player.setHealth(20.0);
+        player.setFoodLevel(20);
+        player.setSaturation(20f);
+        player.setFireTicks(0);
     }
 
     protected void teleportToCheckpoint(Player player) {
@@ -274,6 +278,10 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         player.teleport(location);
         teleporting = false;
         tag.addScores(player.getUniqueId(), -1);
+        computeHighscore();
+        player.setHealth(20.0);
+        player.setFoodLevel(20);
+        player.setSaturation(20f);
     }
 
     protected void addPlaying(Player player) {
@@ -296,7 +304,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     }
 
     protected void computeHighscore() {
-        highscore = Highscore.of(tag.completions);
+        highscore = Highscore.of(tag.scores);
     }
 
     protected int rewardHighscore() {

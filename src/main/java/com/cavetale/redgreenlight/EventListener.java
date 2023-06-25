@@ -44,6 +44,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -118,40 +119,43 @@ public final class EventListener implements Listener {
         }
         if (player.isGliding() || player.isFlying()) {
             player.sendMessage(text("No flying!", DARK_RED));
-            plugin.teleportToSpawn(player);
+            plugin.teleportToCheckpoint(player);
             return;
         }
         if (player.getVehicle() != null) {
             player.sendMessage(text("No riding!", DARK_RED));
-            plugin.teleportToSpawn(player);
+            plugin.teleportToCheckpoint(player);
             return;
         }
         for (PotionEffectType pot : PotionEffectType.values()) {
+            if (pot.equals(PotionEffectType.WITHER)) continue;
+            if (pot.equals(PotionEffectType.POISON)) continue;
+            if (pot.equals(PotionEffectType.SLOW)) continue;
             if (player.hasPotionEffect(pot)) {
                 player.removePotionEffect(pot);
                 player.sendMessage(text("No potion effects!", DARK_RED));
-                plugin.teleportToSpawn(player);
+                plugin.teleportToCheckpoint(player);
                 return;
             }
         }
         if (!isEmpty(player.getEquipment().getHelmet())) {
             player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToSpawn(player);
+            plugin.teleportToCheckpoint(player);
             return;
         }
         if (!isEmpty(player.getEquipment().getChestplate())) {
             player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToSpawn(player);
+            plugin.teleportToCheckpoint(player);
             return;
         }
         if (!isEmpty(player.getEquipment().getLeggings())) {
             player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToSpawn(player);
+            plugin.teleportToCheckpoint(player);
             return;
         }
         if (!isEmpty(player.getEquipment().getBoots())) {
             player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToSpawn(player);
+            plugin.teleportToCheckpoint(player);
             return;
         }
         if (plugin.tag.light == Light.RED) {
@@ -172,7 +176,7 @@ public final class EventListener implements Listener {
                                    text("You win the game!", GREEN)));
             player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, SoundCategory.MASTER, 0.5f, 2.0f);
             plugin.tag.addCompletions(player.getUniqueId(), 1);
-            plugin.tag.addScores(player.getUniqueId(), 10);
+            plugin.tag.addScores(player.getUniqueId(), 25);
             plugin.computeHighscore();
             plugin.saveTag();
             if (plugin.tag.event) {
@@ -182,6 +186,7 @@ public final class EventListener implements Listener {
                 String cmd = "titles unlockset " + player.getName() + " " + String.join(" ", titles);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
             }
+            plugin.teleportToSpawn(player);
         }
     }
 
@@ -205,10 +210,7 @@ public final class EventListener implements Listener {
         // Prune players who left
         for (UUID uuid : List.copyOf(plugin.tag.playing)) {
             Player player = Bukkit.getPlayer(uuid);
-            if (player == null) {
-                plugin.tag.playing.remove(uuid);
-                plugin.tag.checkpoints.remove(uuid);
-            } else if (!plugin.isGameWorld(player.getWorld())) {
+            if (player != null && !plugin.isGameWorld(player.getWorld())) {
                 plugin.tag.playing.remove(uuid);
                 plugin.tag.checkpoints.remove(uuid);
             }
@@ -272,20 +274,19 @@ public final class EventListener implements Listener {
                 continue;
             }
             if (!plugin.tag.playing.contains(player.getUniqueId())) {
-                if (plugin.inSpawnArea(player.getLocation())) {
-                    plugin.addPlaying(player);
-                } else if (!plugin.inGoalArea(player.getLocation())) {
+                plugin.addPlaying(player);
+                if (!plugin.inSpawnArea(player.getLocation()) && !plugin.inGoalArea(player.getLocation())) {
                     plugin.teleportToSpawn(player);
                 }
                 continue;
             }
             if (player.isGliding() || player.isFlying()) {
                 player.sendMessage(text("No flying!", DARK_RED));
-                plugin.teleportToSpawn(player);
+                plugin.teleportToCheckpoint(player);
             }
             if (player.getVehicle() != null && !plugin.inSpawnArea(loc)) {
                 player.sendMessage(text("No riding!", DARK_RED));
-                plugin.teleportToSpawn(player);
+                plugin.teleportToCheckpoint(player);
             }
             sendDirections(player);
         }
@@ -453,7 +454,7 @@ public final class EventListener implements Listener {
         if (plugin.inSpawnArea(loc)) return;
         event.setCancelled(true);
         player.sendMessage(text("No flying!", DARK_RED));
-        plugin.teleportToSpawn(player);
+        plugin.teleportToCheckpoint(player);
     }
 
     @EventHandler
@@ -466,7 +467,7 @@ public final class EventListener implements Listener {
         if (plugin.inSpawnArea(loc)) return;
         event.setCancelled(true);
         player.sendMessage(text("No flying!", DARK_RED));
-        plugin.teleportToSpawn(player);
+        plugin.teleportToCheckpoint(player);
     }
 
     @EventHandler
@@ -479,7 +480,7 @@ public final class EventListener implements Listener {
         if (!isReadyToPlay(player, loc)) return;
         event.setCancelled(true);
         player.sendMessage(text("No projectiles!", DARK_RED));
-        plugin.teleportToSpawn(player);
+        plugin.teleportToCheckpoint(player);
     }
 
     @EventHandler
@@ -489,7 +490,7 @@ public final class EventListener implements Listener {
         Location loc = player.getLocation();
         if (!isReadyToPlay(player, loc)) return;
         player.sendMessage(text("No riptide!", DARK_RED));
-        plugin.teleportToSpawn(player);
+        plugin.teleportToCheckpoint(player);
         Bukkit.getScheduler().runTask(plugin, () -> player.setVelocity(new Vector().zero()));
     }
 
@@ -515,12 +516,26 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
+    private void onPlayerDeath(PlayerDeathEvent event) {
+        if (!plugin.tag.started) return;
+        Player player = event.getEntity();
+        if (!plugin.isGameWorld(player.getWorld())) return;
+        plugin.tag.addScores(player.getUniqueId(), -1);
+        plugin.computeHighscore();
+    }
+
+    @EventHandler
     private void onPlayerRespawn(PlayerRespawnEvent event) {
         if (!plugin.tag.started) return;
         Player player = event.getPlayer();
-        if (!plugin.tag.playing.contains(player.getUniqueId())) return;
         if (!plugin.isGameWorld(player.getWorld())) return;
-        event.setRespawnLocation(plugin.randomSpawnLocation());
+        final int checkpointIndex = plugin.tag.checkpoints.getOrDefault(player.getUniqueId(), -1);
+        if (checkpointIndex < 0 || checkpointIndex >= plugin.checkpoints.size()) {
+            event.setRespawnLocation(plugin.randomSpawnLocation());
+            return;
+        }
+        Vec3i vec = plugin.checkpoints.get(checkpointIndex);
+        event.setRespawnLocation(vec.add(0, 1, 0).toCenterFloorLocation(plugin.getWorld()));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -553,7 +568,11 @@ public final class EventListener implements Listener {
         plugin.tag.checkpoints.put(uuid, checkpointIndex);
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.MASTER, 1.0f, 2.0f);
         player.sendMessage(text("Checkpoint set!", GREEN));
-        plugin.tag.addScores(player.getUniqueId(), 5);
+        plugin.tag.addScores(player.getUniqueId(), 10);
+        plugin.computeHighscore();
+        player.setHealth(20.0);
+        player.setFoodLevel(20);
+        player.setSaturation(20f);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
