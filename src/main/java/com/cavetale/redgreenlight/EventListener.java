@@ -423,7 +423,7 @@ public final class EventListener implements Listener {
                 backwards = true;
                 final int backwardsTicks = plugin.backwardsTicks.getOrDefault(uuid, 0) + 1;
                 plugin.backwardsTicks.put(uuid, backwardsTicks);
-                if (backwardsTicks > 60 && (plugin.tag.ticks % 30) < 15) {
+                if (false && backwardsTicks > 60 && (plugin.tag.ticks % 30) < 15) {
                     player.sendActionBar(text("TURN AROUND", DARK_RED, BOLD));
                 } else {
                     player.sendActionBar(Mytems.ARROW_DOWN.component);
