@@ -260,6 +260,10 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     }
 
     protected void teleportToCheckpoint(Player player, String reason) {
+        getLogger().info(player.getName() + " went back to checkpoint because: " + reason);
+        if (player.hasPermission("group.trusted")) {
+            player.sendMessage(text("Checkpoint reason: " + reason, YELLOW));
+        }
         Instant invincible = invincibility.get(player.getUniqueId());
         if (invincible == null || invincible.toEpochMilli() < Instant.now().toEpochMilli()) {
             invincibility.put(player.getUniqueId(), Instant.now().plus(Duration.ofSeconds(3)));
@@ -282,10 +286,6 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20f);
-        getLogger().info(player.getName() + " went back to checkpoint because: " + reason);
-        if (player.hasPermission("group.trusted")) {
-            player.sendMessage(text("Checkpoint reason: " + reason, YELLOW));
-        }
     }
 
     protected void addPlaying(Player player) {
