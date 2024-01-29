@@ -119,12 +119,12 @@ public final class EventListener implements Listener {
         }
         if (player.isGliding() || player.isFlying()) {
             player.sendMessage(text("No flying!", DARK_RED));
-            plugin.teleportToCheckpoint(player);
+            plugin.teleportToCheckpoint(player, "Flying");
             return;
         }
         if (player.getVehicle() != null) {
             player.sendMessage(text("No riding!", DARK_RED));
-            plugin.teleportToCheckpoint(player);
+            plugin.teleportToCheckpoint(player, "Riding");
             return;
         }
         for (PotionEffectType pot : PotionEffectType.values()) {
@@ -134,34 +134,34 @@ public final class EventListener implements Listener {
             if (player.hasPotionEffect(pot)) {
                 player.removePotionEffect(pot);
                 player.sendMessage(text("No potion effects!", DARK_RED));
-                plugin.teleportToCheckpoint(player);
+                plugin.teleportToCheckpoint(player, "Potion Effect");
                 return;
             }
         }
         if (!isEmpty(player.getEquipment().getHelmet())) {
             player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player);
+            plugin.teleportToCheckpoint(player, "Helmet");
             return;
         }
         if (!isEmpty(player.getEquipment().getChestplate())) {
             player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player);
+            plugin.teleportToCheckpoint(player, "Chestplate");
             return;
         }
         if (!isEmpty(player.getEquipment().getLeggings())) {
             player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player);
+            plugin.teleportToCheckpoint(player, "Leggings");
             return;
         }
         if (!isEmpty(player.getEquipment().getBoots())) {
             player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player);
+            plugin.teleportToCheckpoint(player, "Boots");
             return;
         }
         if (plugin.tag.light == Light.RED) {
             if (plugin.inGoalArea(loc)) return;
             if (plugin.isAtCheckpoint(player)) return;
-            plugin.teleportToCheckpoint(player);
+            plugin.teleportToCheckpoint(player, "Movement");
             player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
         } else if (plugin.inGoalArea(loc)) {
             plugin.getLogger().info(player.getName() + " crossed the finish line");
@@ -200,7 +200,7 @@ public final class EventListener implements Listener {
         if (plugin.inSpawnArea(loc)) return;
         if (plugin.inGoalArea(loc)) return;
         if (plugin.isAtCheckpoint(player)) return;
-        plugin.teleportToCheckpoint(player);
+        plugin.teleportToCheckpoint(player, event.isSneaking() ? "Sneak" : "Unsneak");
         player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
     }
 
@@ -282,11 +282,11 @@ public final class EventListener implements Listener {
             }
             if (player.isGliding() || player.isFlying()) {
                 player.sendMessage(text("No flying!", DARK_RED));
-                plugin.teleportToCheckpoint(player);
+                plugin.teleportToCheckpoint(player, "Tick Flight");
             }
             if (player.getVehicle() != null && !plugin.inSpawnArea(loc)) {
                 player.sendMessage(text("No riding!", DARK_RED));
-                plugin.teleportToCheckpoint(player);
+                plugin.teleportToCheckpoint(player, "Tick Riding");
             }
             sendDirections(player);
         }
@@ -454,7 +454,7 @@ public final class EventListener implements Listener {
         if (plugin.inSpawnArea(loc)) return;
         event.setCancelled(true);
         player.sendMessage(text("No flying!", DARK_RED));
-        plugin.teleportToCheckpoint(player);
+        plugin.teleportToCheckpoint(player, "Toggle Glide");
     }
 
     @EventHandler
@@ -467,7 +467,7 @@ public final class EventListener implements Listener {
         if (plugin.inSpawnArea(loc)) return;
         event.setCancelled(true);
         player.sendMessage(text("No flying!", DARK_RED));
-        plugin.teleportToCheckpoint(player);
+        plugin.teleportToCheckpoint(player, "Toggle Flight");
     }
 
     @EventHandler
@@ -480,7 +480,7 @@ public final class EventListener implements Listener {
         if (!isReadyToPlay(player, loc)) return;
         event.setCancelled(true);
         player.sendMessage(text("No projectiles!", DARK_RED));
-        plugin.teleportToCheckpoint(player);
+        plugin.teleportToCheckpoint(player, "Projectile Launch");
     }
 
     @EventHandler
@@ -490,7 +490,7 @@ public final class EventListener implements Listener {
         Location loc = player.getLocation();
         if (!isReadyToPlay(player, loc)) return;
         player.sendMessage(text("No riptide!", DARK_RED));
-        plugin.teleportToCheckpoint(player);
+        plugin.teleportToCheckpoint(player, "Riptide");
         Bukkit.getScheduler().runTask(plugin, () -> player.setVelocity(new Vector().zero()));
     }
 
@@ -583,7 +583,7 @@ public final class EventListener implements Listener {
         if (event.getCause() != EntityDamageEvent.DamageCause.VOID) return;
         plugin.getLogger().info(player.getName() + " void damage");
         event.setCancelled(true);
-        Bukkit.getScheduler().runTask(plugin, () -> plugin.teleportToCheckpoint(player));
+        Bukkit.getScheduler().runTask(plugin, () -> plugin.teleportToCheckpoint(player, "Void Damage"));
     }
 
     @EventHandler
