@@ -161,7 +161,18 @@ public final class EventListener implements Listener {
         if (plugin.tag.light == Light.RED) {
             if (plugin.inGoalArea(loc)) return;
             if (plugin.isAtCheckpoint(player)) return;
-            plugin.teleportToCheckpoint(player, "Movement");
+            if (event.hasChangedPosition()) {
+                final double x = event.getTo().getX() - event.getFrom().getX();
+                final double y = event.getTo().getY() - event.getFrom().getY();
+                final double z = event.getTo().getZ() - event.getFrom().getZ();
+                plugin.teleportToCheckpoint(player, String.format("Position x=%.4f y=%.4f z=%.4f", x, y, z));
+            } else if (event.hasChangedOrientation()) {
+                final double yaw = event.getTo().getYaw() - event.getFrom().getYaw();
+                final double pitch = event.getTo().getPitch() - event.getFrom().getPitch();
+                plugin.teleportToCheckpoint(player, String.format("Orientation yaw=%.4f pitch=%.4f", yaw, pitch));
+            } else {
+                plugin.teleportToCheckpoint(player, "Generic Movement");
+            }
             player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
         } else if (plugin.inGoalArea(loc)) {
             plugin.getLogger().info(player.getName() + " crossed the finish line");
