@@ -166,12 +166,18 @@ public final class EventListener implements Listener {
                 final double x = event.getTo().getX() - event.getFrom().getX();
                 final double y = event.getTo().getY() - event.getFrom().getY();
                 final double z = event.getTo().getZ() - event.getFrom().getZ();
+                if (Math.abs(x) < 0.01 && Math.abs(z) < 0.01 && Math.abs(y) < 0.15) {
+                    // Slight vertical movements were sometimes
+                    // observed
+                    return;
+                }
                 plugin.teleportToCheckpoint(player, String.format("Position x=%.4f y=%.4f z=%.4f", x, y, z));
             } else if (event.hasChangedOrientation()) {
                 final double yaw = event.getTo().getYaw() - event.getFrom().getYaw();
                 final double absYaw = Math.abs(yaw);
-                if (absYaw < 0.01) return;
-                if (Math.abs(absYaw - 360.0) < 0.01) return;
+                final double yawThreshold = 1.0;
+                if (absYaw < yawThreshold) return;
+                if (Math.abs(absYaw - 360.0) < yawThreshold) return;
                 final double pitch = event.getTo().getPitch() - event.getFrom().getPitch();
                 plugin.teleportToCheckpoint(player, String.format("Orientation yaw=%.4f pitch=%.4f", yaw, pitch));
             } else {
