@@ -261,7 +261,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
 
     protected void teleportToCheckpoint(Player player, String reason) {
         getLogger().info(player.getName() + " went back to checkpoint because: " + reason);
-        if (player.hasPermission("group.trusted")) {
+        if (player.hasPermission("redgreenlight.debug")) {
             player.sendMessage(text("Checkpoint reason: " + reason, YELLOW));
         }
         Instant invincible = invincibility.get(player.getUniqueId());

@@ -24,3 +24,7 @@ permissions:
   redgreenlight.admin:
     description: Use /redgreenlight
     default: op
+
+  redgreenlight.debug:
+    description: Receive debug messages
+    default: op
