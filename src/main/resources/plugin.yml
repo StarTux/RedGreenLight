@@ -27,4 +27,4 @@ permissions:
 
   redgreenlight.debug:
     description: Receive debug messages
-    default: op
+    default: false
