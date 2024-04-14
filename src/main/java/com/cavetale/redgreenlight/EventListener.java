@@ -176,9 +176,11 @@ public final class EventListener implements Listener {
                 final double yaw = event.getTo().getYaw() - event.getFrom().getYaw();
                 final double absYaw = Math.abs(yaw);
                 final double yawThreshold = 1.0;
-                if (absYaw < yawThreshold) return;
-                if (Math.abs(absYaw - 360.0) < yawThreshold) return;
                 final double pitch = event.getTo().getPitch() - event.getFrom().getPitch();
+                if (Math.abs(pitch) < 0.01) {
+                    if (absYaw < yawThreshold) return;
+                    if (Math.abs(absYaw - 360.0) < yawThreshold) return;
+                }
                 plugin.teleportToCheckpoint(player, String.format("Orientation yaw=%.4f pitch=%.4f", yaw, pitch));
             } else {
                 plugin.teleportToCheckpoint(player, "Generic Movement");
