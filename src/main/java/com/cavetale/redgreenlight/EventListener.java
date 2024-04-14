@@ -3,6 +3,7 @@ package com.cavetale.redgreenlight;
 import com.cavetale.core.event.block.PlayerBlockAbilityQuery;
 import com.cavetale.core.event.hud.PlayerHudEvent;
 import com.cavetale.core.event.hud.PlayerHudPriority;
+import com.cavetale.core.money.Money;
 import com.cavetale.core.struct.Cuboid;
 import com.cavetale.core.struct.Vec3i;
 import com.cavetale.fam.trophy.Highscore;
@@ -199,6 +200,7 @@ public final class EventListener implements Listener {
                                               "TrafficLight");
                 String cmd = "titles unlockset " + player.getName() + " " + String.join(" ", titles);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+                Money.get().give(player.getUniqueId(), 1000.0, plugin, "Red Light Green Light");
             }
             plugin.teleportToSpawn(player);
         }
@@ -587,6 +589,9 @@ public final class EventListener implements Listener {
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20f);
+        if (plugin.tag.event) {
+            Money.get().give(player.getUniqueId(), 100.0, plugin, "Red Light Green Light");
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
