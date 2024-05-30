@@ -131,7 +131,7 @@ public final class EventListener implements Listener {
         for (PotionEffectType pot : PotionEffectType.values()) {
             if (pot.equals(PotionEffectType.WITHER)) continue;
             if (pot.equals(PotionEffectType.POISON)) continue;
-            if (pot.equals(PotionEffectType.SLOW)) continue;
+            if (pot.equals(PotionEffectType.SLOWNESS)) continue;
             if (player.hasPotionEffect(pot)) {
                 player.removePotionEffect(pot);
                 player.sendMessage(text("No potion effects!", DARK_RED));
