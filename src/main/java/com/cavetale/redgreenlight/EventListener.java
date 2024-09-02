@@ -115,10 +115,8 @@ public final class EventListener implements Listener {
         Location loc = event.getTo();
         if (!isReadyToPlay(player, loc)) return;
         if (plugin.inSpawnArea(loc)) return;
-        if (!plugin.tag.playing.contains(player.getUniqueId())) {
-            // We catch them on the next tick
-            return;
-        }
+        // Ignore players that aren't playing
+        if (!plugin.tag.playing.contains(player.getUniqueId())) return;
         if (player.isGliding() || player.isFlying()) {
             player.sendMessage(text("No flying!", DARK_RED));
             plugin.teleportToCheckpoint(player, "Flying");
@@ -260,7 +258,7 @@ public final class EventListener implements Listener {
                                     text("Stand Still!", RED),
                                     times(Duration.ZERO, Duration.ofMillis(plugin.tag.totalCooldown * 50), Duration.ZERO));
                 this.playerRedLightLocations.clear();
-                for (Player player : players) {
+                for (Player player : players) { // TODO: Only put playing players
                     this.playerRedLightLocations.put(player, player.getLocation());
                     player.showTitle(title);
                     player.playSound(player.getLocation(), Sound.ENTITY_GHAST_SCREAM, SoundCategory.MASTER, 0.5f, 2.0f);
