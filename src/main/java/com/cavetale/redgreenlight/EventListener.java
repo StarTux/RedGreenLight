@@ -54,6 +54,7 @@ import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 import static com.cavetale.core.font.Unicode.tiny;
@@ -128,16 +129,17 @@ public final class EventListener implements Listener {
             plugin.teleportToCheckpoint(player, "Riding");
             return;
         }
-        for (PotionEffectType pot : PotionEffectType.values()) {
-            if (pot.equals(PotionEffectType.WITHER)) continue;
-            if (pot.equals(PotionEffectType.POISON)) continue;
-            if (pot.equals(PotionEffectType.SLOWNESS)) continue;
-            if (player.hasPotionEffect(pot)) {
-                player.removePotionEffect(pot);
-                player.sendMessage(text("No potion effects!", DARK_RED));
-                plugin.teleportToCheckpoint(player, "Potion Effect");
-                return;
+        for (PotionEffect pe : player.getActivePotionEffects()) {
+            PotionEffectType peType = pe.getType();
+            if (peType.equals(PotionEffectType.WITHER) ||
+                    (peType.equals(PotionEffectType.POISON)) ||
+                    (peType.equals(PotionEffectType.SLOWNESS))) {
+                continue;
             }
+            player.removePotionEffect(peType);
+            player.sendMessage(text("No potion effects!", RED));
+            plugin.teleportToCheckpoint(player, "Potion Effect");
+            return;
         }
         EntityEquipment equip = player.getEquipment();
         if (!isEmpty(equip.getHelmet()) || !isEmpty(equip.getChestplate()) ||
