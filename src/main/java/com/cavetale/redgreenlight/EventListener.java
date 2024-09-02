@@ -83,8 +83,7 @@ public final class EventListener implements Listener {
         if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE) {
             return false;
         }
-        if (!plugin.inGameArea(loc)) return false;
-        return true;
+        return plugin.inGameArea(loc);
     }
 
     @EventHandler
@@ -215,7 +214,7 @@ public final class EventListener implements Listener {
         player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
     }
 
-    protected void onTick() {
+    void onTick() {
         World w = plugin.getWorld();
         if (w == null) return;
         // Prune players who left
@@ -380,8 +379,7 @@ public final class EventListener implements Listener {
                 if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
                 Block block = vec.toBlock(w);
                 BlockData bdata = block.getBlockData();
-                if (!(bdata instanceof Dispenser)) continue;
-                Dispenser dispenser = (Dispenser) bdata;
+                if (!(bdata instanceof Dispenser dispenser)) continue;
                 BlockFace facing = dispenser.getFacing();
                 Location location = block.getLocation().add(facing.getModX() + 0.5,
                                                             facing.getModY() + 0.5,
@@ -406,8 +404,7 @@ public final class EventListener implements Listener {
                 for (Vec3i vec : campfireArea.enumerate()) {
                     Block block = vec.toBlock(w);
                     BlockData bdata = block.getBlockData();
-                    if (!(bdata instanceof Campfire)) continue;
-                    Campfire campfire = (Campfire) bdata;
+                    if (!(bdata instanceof Campfire campfire)) continue;
                     int cinterval = vec.z % 4;
                     if (cinterval < 0) cinterval += 4;
                     boolean shouldBeLit = cinterval == litz;
@@ -429,7 +426,7 @@ public final class EventListener implements Listener {
         Vector playerDirection = loc.getDirection();
         Vec3i direction = checkpoint.subtract(pos);
         double playerAngle = Math.atan2(playerDirection.getZ(), playerDirection.getX());
-        double targetAngle = Math.atan2((double) direction.z, (double) direction.x);
+        double targetAngle = Math.atan2(direction.z, direction.x);
         boolean backwards = false;
         if (Double.isFinite(playerAngle) && Double.isFinite(targetAngle)) {
             double angle = targetAngle - playerAngle;
@@ -462,9 +459,8 @@ public final class EventListener implements Listener {
     @EventHandler
     private void onEntityToggleGlide(EntityToggleGlideEvent event) {
         if (!plugin.tag.started) return;
-        if (!(event.getEntity() instanceof Player)) return;
+        if (!(event.getEntity() instanceof Player player)) return;
         if (!event.isGliding()) return;
-        Player player = (Player) event.getEntity();
         Location loc = player.getLocation();
         if (!isReadyToPlay(player, loc)) return;
         if (plugin.inSpawnArea(loc)) return;
@@ -490,8 +486,7 @@ public final class EventListener implements Listener {
     private void onProjectileLaunch(ProjectileLaunchEvent event) {
         if (!plugin.tag.started) return;
         Projectile projectile = event.getEntity();
-        if (!(projectile.getShooter() instanceof Player)) return;
-        Player player = (Player) projectile.getShooter();
+        if (!(projectile.getShooter() instanceof Player player)) return;
         Location loc = player.getLocation();
         if (!isReadyToPlay(player, loc)) return;
         event.setCancelled(true);
@@ -502,7 +497,7 @@ public final class EventListener implements Listener {
     @EventHandler
     private void onPlayerRiptide(PlayerRiptideEvent event) {
         if (!plugin.tag.started) return;
-        Player player = (Player) event.getPlayer();
+        Player player = event.getPlayer();
         Location loc = player.getLocation();
         if (!isReadyToPlay(player, loc)) return;
         player.sendMessage(text("No riptide!", DARK_RED));
@@ -517,7 +512,7 @@ public final class EventListener implements Listener {
         final UUID uuid = player.getUniqueId();
         if (!plugin.isGameWorld(player.getWorld())) return;
         List<Component> lines = new ArrayList<>();
-        lines.add(plugin.TITLE);
+        lines.add(RedGreenLightPlugin.TITLE);
         lines.add(textOfChildren(text(tiny("light "), GRAY), plugin.tag.light.toComponent().decorate(BOLD)));
         lines.add(textOfChildren(text(tiny("players "), GRAY), text(plugin.tag.playing.size(), GREEN)));
         lines.add(textOfChildren(text(tiny("wins "), GRAY), text(plugin.tag.getCompletions(uuid), AQUA)));

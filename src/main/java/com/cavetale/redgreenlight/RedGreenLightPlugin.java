@@ -40,30 +40,30 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextColor.color;
 
 public final class RedGreenLightPlugin extends JavaPlugin {
-    protected RedGreenLightCommand redgreenlightCommand = new RedGreenLightCommand(this);
-    protected EventListener eventListener = new EventListener(this);
-    protected Tag tag;
-    protected Random random = new Random();
-    protected List<Cuboid> gameAreas;
-    protected List<Cuboid> spawnAreas;
-    protected List<Cuboid> goalAreas;
-    protected List<Cuboid> warpAreas;
-    protected List<Cuboid> creeperAreas;
-    protected List<Cuboid> snowmanAreas;
-    protected List<Cuboid> dispenserAreas;
-    protected List<Cuboid> campfireAreas;
-    protected List<Cuboid> skeletonAreas;
-    protected List<Cuboid> ghastAreas;
-    protected List<Vec3i> checkpoints;
-    protected BukkitTask task;
-    protected boolean teleporting;
-    protected final Map<Vec3i, Creeper> creeperMap = new HashMap<>();
-    protected final Map<Vec3i, Snowman> snowmanMap = new HashMap<>();
-    protected final Map<Vec3i, Skeleton> skeletonMap = new HashMap<>();
-    protected final Map<Vec3i, Ghast> ghastMap = new HashMap<>();
-    protected List<Highscore> highscore = List.of();
-    protected Map<UUID, Instant> invincibility = new HashMap<>();
-    protected Map<UUID, Integer> backwardsTicks = new HashMap<>();
+    private final RedGreenLightCommand redgreenlightCommand = new RedGreenLightCommand(this);
+    private final EventListener eventListener = new EventListener(this);
+    Tag tag;
+    final Random random = new Random();
+    private List<Cuboid> gameAreas;
+    private List<Cuboid> spawnAreas;
+    private List<Cuboid> goalAreas;
+    private List<Cuboid> warpAreas;
+    List<Cuboid> creeperAreas;
+    List<Cuboid> snowmanAreas;
+    List<Cuboid> dispenserAreas;
+    List<Cuboid> campfireAreas;
+    List<Cuboid> skeletonAreas;
+    List<Cuboid> ghastAreas;
+    List<Vec3i> checkpoints;
+    private BukkitTask task;
+    boolean teleporting;
+    final Map<Vec3i, Creeper> creeperMap = new HashMap<>();
+    final Map<Vec3i, Snowman> snowmanMap = new HashMap<>();
+    final Map<Vec3i, Skeleton> skeletonMap = new HashMap<>();
+    final Map<Vec3i, Ghast> ghastMap = new HashMap<>();
+    List<Highscore> highscore = List.of();
+    private final Map<UUID, Instant> invincibility = new HashMap<>();
+    final Map<UUID, Integer> backwardsTicks = new HashMap<>();
     public static final Component TITLE = join(noSeparators(),
                                                Mytems.TRAFFIC_LIGHT.component,
                                                text(tiny("Red"), color(0xFF0000)),
@@ -71,7 +71,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
                                                Mytems.TRAFFIC_LIGHT.component,
                                                text(tiny("Green"), color(0x00FF00)),
                                                text(tiny("Light"), AQUA));
-    protected final BossBar bossBar = BossBar.bossBar(TITLE, 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
+    final BossBar bossBar = BossBar.bossBar(TITLE, 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
 
     @Override
     public void onEnable() {
@@ -86,7 +86,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         saveTag();
     }
 
-    protected void load() {
+    void load() {
         loadTag();
         loadAreas();
         for (UUID uuid : List.copyOf(tag.playing)) {
@@ -98,7 +98,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         }
     }
 
-    protected void loadTag() {
+    private void loadTag() {
         File file = new File(getDataFolder(), "save.json");
         tag = Json.load(file, Tag.class, Tag::new);
         if (tag.started) {
@@ -109,7 +109,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         computeHighscore();
     }
 
-    protected void cleanUp() {
+    void cleanUp() {
         for (Creeper creeper : creeperMap.values()) {
             creeper.remove();
         }
@@ -128,13 +128,13 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         ghastMap.clear();
     }
 
-    protected void saveTag() {
+    void saveTag() {
         getDataFolder().mkdirs();
         File file = new File(getDataFolder(), "save.json");
         Json.save(file, tag);
     }
 
-    protected void loadAreas() {
+    private void loadAreas() {
         gameAreas = List.of();
         spawnAreas = List.of();
         goalAreas = List.of();
@@ -204,7 +204,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         return inArea(goalAreas, location);
     }
 
-    protected boolean isAtCheckpoint(Player player) {
+    boolean isAtCheckpoint(Player player) {
         int checkpointIndex = tag.checkpoints.getOrDefault(player.getUniqueId(), -1);
         if (checkpointIndex < 0 || checkpointIndex >= checkpoints.size()) return false;
         Vec3i checkpoint = checkpoints.get(checkpointIndex);
@@ -224,7 +224,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         return list;
     }
 
-    protected World getWorld() {
+    World getWorld() {
         return Bukkit.getWorld(tag.world);
     }
 
@@ -242,7 +242,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     /**
      * Warp to spawn and mark as playing.
      */
-    protected void teleportToSpawn(Player player) {
+    void teleportToSpawn(Player player) {
         Location location = randomSpawnLocation();
         Location ploc = player.getLocation();
         location.setPitch(ploc.getPitch());
@@ -259,7 +259,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         player.setFireTicks(0);
     }
 
-    protected void teleportToCheckpoint(Player player, String reason) {
+    void teleportToCheckpoint(Player player, String reason) {
         getLogger().info(player.getName() + " went back to checkpoint because: " + reason);
         if (player.hasPermission("redgreenlight.debug")) {
             player.sendMessage(text("Checkpoint reason: " + reason, YELLOW));
@@ -288,7 +288,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         player.setSaturation(20f);
     }
 
-    protected void addPlaying(Player player) {
+    void addPlaying(Player player) {
         if (tag.playing.contains(player.getUniqueId())) return;
         tag.playing.add(player.getUniqueId());
         if (tag.event) {
@@ -296,22 +296,22 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         }
     }
 
-    protected void startTicking() {
+    void startTicking() {
         if (task != null) return;
         task = Bukkit.getScheduler().runTaskTimer(this, eventListener::onTick, 0L, 0L);
     }
 
-    protected void stopTicking() {
+    void stopTicking() {
         if (task == null) return;
         task.cancel();
         task = null;
     }
 
-    protected void computeHighscore() {
+    void computeHighscore() {
         highscore = Highscore.of(tag.scores);
     }
 
-    protected int rewardHighscore() {
+    int rewardHighscore() {
         return Highscore.reward(tag.scores,
                                 "red_light_green_light",
                                 TrophyCategory.RED_GREEN_LIGHT,

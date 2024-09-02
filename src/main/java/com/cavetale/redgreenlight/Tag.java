@@ -7,17 +7,17 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class Tag {
-    protected boolean started;
-    protected String world = "";
-    protected Light light = Light.RED;
-    protected int totalCooldown = 1;
-    protected int cooldown = 0;
-    protected int ticks = 0;
-    protected boolean event;
-    protected Map<UUID, Integer> completions = new HashMap<>();
-    protected Map<UUID, Integer> scores = new HashMap<>();
-    protected Set<UUID> playing = new HashSet<>();
-    protected Map<UUID, Integer> checkpoints = new HashMap<>();
+    boolean started;
+    String world = "";
+    Light light = Light.RED;
+    int totalCooldown = 1;
+    int cooldown = 0;
+    int ticks = 0;
+    boolean event;
+    final Map<UUID, Integer> completions = new HashMap<>();
+    final Map<UUID, Integer> scores = new HashMap<>();
+    final Set<UUID> playing = new HashSet<>();
+    final Map<UUID, Integer> checkpoints = new HashMap<>();
 
     public int getCompletions(UUID uuid) {
         return completions.getOrDefault(uuid, 0);

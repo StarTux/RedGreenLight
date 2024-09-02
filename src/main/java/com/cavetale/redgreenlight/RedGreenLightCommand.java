@@ -10,7 +10,7 @@ import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public final class RedGreenLightCommand extends AbstractCommand<RedGreenLightPlugin> {
-    protected RedGreenLightCommand(final RedGreenLightPlugin plugin) {
+    RedGreenLightCommand(final RedGreenLightPlugin plugin) {
         super(plugin, "redgreenlightadmin");
     }
 
