@@ -256,7 +256,11 @@ public final class EventListener implements Listener {
                 plugin.tag.light = Light.YELLOW;
                 plugin.tag.totalCooldown = 30;
                 plugin.tag.cooldown = plugin.tag.totalCooldown;
+                Title title = title(Light.YELLOW.toComponent(),
+                        text("Stop Moving!", YELLOW),
+                        times(Duration.ZERO, Duration.ofMillis(1500), Duration.ZERO));
                 for (Player player : players) {
+                    player.showTitle(title);
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.MASTER, 0.5f, 0.5f);
                 }
             } else if (plugin.tag.light == Light.YELLOW) {
@@ -264,8 +268,8 @@ public final class EventListener implements Listener {
                 plugin.tag.totalCooldown = 100 + plugin.random.nextInt(40) - plugin.random.nextInt(40);
                 plugin.tag.cooldown = plugin.tag.totalCooldown;
                 Title title = title(Light.RED.toComponent(),
-                                    text("Stop Moving", DARK_RED),
-                                    times(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
+                                    text("Stand Still!", RED),
+                                    times(Duration.ZERO, Duration.ofMillis(plugin.tag.totalCooldown * 50), Duration.ZERO));
                 for (Player player : players) {
                     player.showTitle(title);
                     player.playSound(player.getLocation(), Sound.ENTITY_GHAST_SCREAM, SoundCategory.MASTER, 0.5f, 2.0f);
