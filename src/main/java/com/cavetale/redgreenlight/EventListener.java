@@ -158,7 +158,7 @@ public final class EventListener implements Listener {
             plugin.teleportToCheckpoint(player, "Boots");
             return;
         }
-        if (plugin.tag.light == Light.RED) {
+        if (plugin.tag.light == Light.RED) { // Check for player movement
             if (plugin.inGoalArea(loc)) return;
             if (plugin.isAtCheckpoint(player)) return;
             Location rlLoc = this.playerRedLightLocations.get(player);
@@ -182,9 +182,9 @@ public final class EventListener implements Listener {
                 if (Math.abs(dp) < pLim && (dyAbs < yLim || Math.abs(dyAbs - 360) < yLim)) return;
                 plugin.teleportToCheckpoint(player, String.format("Orientation yaw=%.4f pitch=%.4f", dyAbs, dp));
             } else {
-                plugin.teleportToCheckpoint(player, "Generic Movement");
+                return;
             }
-            player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
+            player.sendMessage(text("You moved! Back to your checkpoint!", RED));
         } else if (plugin.inGoalArea(loc)) {
             plugin.getLogger().info(player.getName() + " crossed the finish line");
             plugin.tag.playing.remove(player.getUniqueId());
