@@ -168,7 +168,7 @@ public final class EventListener implements Listener {
                 this.playerRedLightLocations.put(player, rlLoc);
             }
             if (event.hasChangedPosition()) {
-                final double xzLim = 0.01, yLim = 0.15;
+                final double xzLim = 0.05, yLim = 0.10;
                 final double dx = newLoc.x() - rlLoc.x(),
                         dy = newLoc.y() - rlLoc.y(),
                         dz = newLoc.z() - rlLoc.z();
@@ -176,10 +176,10 @@ public final class EventListener implements Listener {
                 if (Math.abs(dx) < xzLim && Math.abs(dz) < xzLim && Math.abs(dy) < yLim) return;
                 plugin.teleportToCheckpoint(player, String.format("Position x=%.4f y=%.4f z=%.4f", dx, dy, dz));
             } else if (event.hasChangedOrientation()) {
-                final double ypLim = 0.01;
-                final double dyAbs = Math.abs(newLoc.getYaw() - rlLoc.getYaw()),
-                        dp = newLoc.getPitch() - rlLoc.getPitch();
-                if (Math.abs(dp) < ypLim && (dyAbs < ypLim || Math.abs(dyAbs - 360) < ypLim)) return;
+                final double pLim = 0.05, yLim = 0.1;
+                final double dp = newLoc.getPitch() - rlLoc.getPitch(),
+                        dyAbs = Math.abs(newLoc.getYaw() - rlLoc.getYaw());
+                if (Math.abs(dp) < pLim && (dyAbs < yLim || Math.abs(dyAbs - 360) < yLim)) return;
                 plugin.teleportToCheckpoint(player, String.format("Orientation yaw=%.4f pitch=%.4f", dyAbs, dp));
             } else {
                 plugin.teleportToCheckpoint(player, "Generic Movement");
