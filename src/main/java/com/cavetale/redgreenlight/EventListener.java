@@ -11,10 +11,8 @@ import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.WardrobeItem;
 import com.cavetale.tutor.event.PetSpawnEvent;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
@@ -69,6 +67,7 @@ import static net.kyori.adventure.title.Title.title;
 @RequiredArgsConstructor
 public final class EventListener implements Listener {
     private final RedGreenLightPlugin plugin;
+    private final HashMap<Player, Location> playerRedLightLocations = new HashMap<>();
 
     public void enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -162,26 +161,26 @@ public final class EventListener implements Listener {
         if (plugin.tag.light == Light.RED) {
             if (plugin.inGoalArea(loc)) return;
             if (plugin.isAtCheckpoint(player)) return;
+            Location rlLoc = this.playerRedLightLocations.get(player);
+            Location newLoc = event.getTo();
+            if (rlLoc == null) {
+                rlLoc = event.getFrom();
+                this.playerRedLightLocations.put(player, rlLoc);
+            }
             if (event.hasChangedPosition()) {
-                final double x = event.getTo().getX() - event.getFrom().getX();
-                final double y = event.getTo().getY() - event.getFrom().getY();
-                final double z = event.getTo().getZ() - event.getFrom().getZ();
-                if (Math.abs(x) < 0.01 && Math.abs(z) < 0.01 && Math.abs(y) < 0.15) {
-                    // Slight vertical movements were sometimes
-                    // observed
-                    return;
-                }
-                plugin.teleportToCheckpoint(player, String.format("Position x=%.4f y=%.4f z=%.4f", x, y, z));
+                final double xzLim = 0.01, yLim = 0.15;
+                final double dx = newLoc.x() - rlLoc.x(),
+                        dy = newLoc.y() - rlLoc.y(),
+                        dz = newLoc.z() - rlLoc.z();
+                // Slight vertical movements were sometimes observed
+                if (Math.abs(dx) < xzLim && Math.abs(dz) < xzLim && Math.abs(dy) < yLim) return;
+                plugin.teleportToCheckpoint(player, String.format("Position x=%.4f y=%.4f z=%.4f", dx, dy, dz));
             } else if (event.hasChangedOrientation()) {
-                final double yaw = event.getTo().getYaw() - event.getFrom().getYaw();
-                final double absYaw = Math.abs(yaw);
-                final double yawThreshold = 1.0;
-                final double pitch = event.getTo().getPitch() - event.getFrom().getPitch();
-                if (Math.abs(pitch) < 0.01) {
-                    if (absYaw < yawThreshold) return;
-                    if (Math.abs(absYaw - 360.0) < yawThreshold) return;
-                }
-                plugin.teleportToCheckpoint(player, String.format("Orientation yaw=%.4f pitch=%.4f", yaw, pitch));
+                final double ypLim = 0.01;
+                final double dyAbs = Math.abs(newLoc.getYaw() - rlLoc.getYaw()),
+                        dp = newLoc.getPitch() - rlLoc.getPitch();
+                if (Math.abs(dp) < ypLim && (dyAbs < ypLim || Math.abs(dyAbs - 360) < ypLim)) return;
+                plugin.teleportToCheckpoint(player, String.format("Orientation yaw=%.4f pitch=%.4f", dyAbs, dp));
             } else {
                 plugin.teleportToCheckpoint(player, "Generic Movement");
             }
@@ -270,7 +269,9 @@ public final class EventListener implements Listener {
                 Title title = title(Light.RED.toComponent(),
                                     text("Stand Still!", RED),
                                     times(Duration.ZERO, Duration.ofMillis(plugin.tag.totalCooldown * 50), Duration.ZERO));
+                this.playerRedLightLocations.clear();
                 for (Player player : players) {
+                    this.playerRedLightLocations.put(player, player.getLocation());
                     player.showTitle(title);
                     player.playSound(player.getLocation(), Sound.ENTITY_GHAST_SCREAM, SoundCategory.MASTER, 0.5f, 2.0f);
                 }
