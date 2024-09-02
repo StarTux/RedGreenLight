@@ -52,6 +52,7 @@ import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
@@ -138,25 +139,11 @@ public final class EventListener implements Listener {
                 return;
             }
         }
-        if (!isEmpty(player.getEquipment().getHelmet())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Helmet");
-            return;
-        }
-        if (!isEmpty(player.getEquipment().getChestplate())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Chestplate");
-            return;
-        }
-        if (!isEmpty(player.getEquipment().getLeggings())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Leggings");
-            return;
-        }
-        if (!isEmpty(player.getEquipment().getBoots())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Boots");
-            return;
+        EntityEquipment equip = player.getEquipment();
+        if (!isEmpty(equip.getHelmet()) || !isEmpty(equip.getChestplate()) ||
+                !isEmpty(equip.getLeggings()) || !isEmpty(equip.getBoots())) {
+            player.sendMessage(text("No armor!", RED));
+            plugin.teleportToCheckpoint(player, "Armor Equipped");
         }
         if (plugin.tag.light == Light.RED) { // Check for player movement
             if (plugin.inGoalArea(loc)) return;
@@ -174,13 +161,14 @@ public final class EventListener implements Listener {
                         dz = newLoc.z() - rlLoc.z();
                 // Slight vertical movements were sometimes observed
                 if (Math.abs(dx) < xzLim && Math.abs(dz) < xzLim && Math.abs(dy) < yLim) return;
-                plugin.teleportToCheckpoint(player, String.format("Position x=%.4f y=%.4f z=%.4f", dx, dy, dz));
+                plugin.teleportToCheckpoint(player, "Position changed: dx=" + dx + " dy=" + dy + " dz=" + dz);
             } else if (event.hasChangedOrientation()) {
                 final double pLim = 0.05, yLim = 0.1;
                 final double dp = newLoc.getPitch() - rlLoc.getPitch(),
-                        dyAbs = Math.abs(newLoc.getYaw() - rlLoc.getYaw());
+                        dy = newLoc.getYaw() - rlLoc.getYaw(),
+                        dyAbs = Math.abs(dy);
                 if (Math.abs(dp) < pLim && (dyAbs < yLim || Math.abs(dyAbs - 360) < yLim)) return;
-                plugin.teleportToCheckpoint(player, String.format("Orientation yaw=%.4f pitch=%.4f", dyAbs, dp));
+                plugin.teleportToCheckpoint(player, "Orientation changed: dy=" + dy + " dp=" + dp);
             } else {
                 return;
             }
