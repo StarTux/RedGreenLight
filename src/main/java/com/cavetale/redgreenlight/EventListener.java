@@ -134,14 +134,14 @@ public final class EventListener implements Listener {
                 continue;
             }
             player.removePotionEffect(peType);
-            player.sendMessage(text("No potion effects!", RED));
+            player.sendMessage(text("No potion effects!", DARK_RED));
             plugin.teleportToCheckpoint(player, "Potion Effect");
             return;
         }
         EntityEquipment equip = player.getEquipment();
         if (!isEmpty(equip.getHelmet()) || !isEmpty(equip.getChestplate()) ||
                 !isEmpty(equip.getLeggings()) || !isEmpty(equip.getBoots())) {
-            player.sendMessage(text("No armor!", RED));
+            player.sendMessage(text("No armor!", DARK_RED));
             plugin.teleportToCheckpoint(player, "Armor Equipped");
         }
         if (plugin.tag.light == Light.RED) { // Check for player movement
