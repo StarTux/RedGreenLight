@@ -149,23 +149,23 @@ public final class EventListener implements Listener {
             if (plugin.inGoalArea(loc)) return;
             if (plugin.isAtCheckpoint(player)) return;
             Location rlLoc = this.playerRedLightLocations.get(player);
-            Location newLoc = event.getTo();
             if (rlLoc == null) {
                 rlLoc = event.getFrom();
-                this.playerRedLightLocations.put(player, rlLoc);
+                this.playerRedLightLocations.put(player, event.getFrom());
             }
+            Location toLoc = event.getTo();
             if (event.hasChangedPosition()) {
                 final double xzLim = 0.05, yLim = 0.10;
-                final double dx = newLoc.x() - rlLoc.x(),
-                        dy = newLoc.y() - rlLoc.y(),
-                        dz = newLoc.z() - rlLoc.z();
+                final double dx = toLoc.x() - rlLoc.x(),
+                        dy = toLoc.y() - rlLoc.y(),
+                        dz = toLoc.z() - rlLoc.z();
                 // Slight vertical movements were sometimes observed
                 if (Math.abs(dx) < xzLim && Math.abs(dz) < xzLim && Math.abs(dy) < yLim) return;
                 plugin.teleportToCheckpoint(player, "Position changed: dx=" + dx + " dy=" + dy + " dz=" + dz);
             } else if (event.hasChangedOrientation()) {
                 final double pLim = 0.05, yLim = 0.1;
-                final double dp = newLoc.getPitch() - rlLoc.getPitch(),
-                        dy = newLoc.getYaw() - rlLoc.getYaw(),
+                final double dp = toLoc.getPitch() - rlLoc.getPitch(),
+                        dy = toLoc.getYaw() - rlLoc.getYaw(),
                         dyAbs = Math.abs(dy);
                 if (Math.abs(dp) < pLim && (dyAbs < yLim || Math.abs(dyAbs - 360) < yLim)) return;
                 plugin.teleportToCheckpoint(player, "Orientation changed: dy=" + dy + " dp=" + dp);
@@ -258,8 +258,7 @@ public final class EventListener implements Listener {
                                     text("Stand Still!", RED),
                                     times(Duration.ZERO, Duration.ofMillis(plugin.tag.totalCooldown * 50), Duration.ZERO));
                 this.playerRedLightLocations.clear();
-                for (Player player : players) { // TODO: Only put playing players
-                    this.playerRedLightLocations.put(player, player.getLocation());
+                for (Player player : players) {
                     player.showTitle(title);
                     player.playSound(player.getLocation(), Sound.ENTITY_GHAST_SCREAM, SoundCategory.MASTER, 0.5f, 2.0f);
                 }
