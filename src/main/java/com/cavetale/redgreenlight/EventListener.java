@@ -154,11 +154,10 @@ public final class EventListener implements Listener {
             }
             Location toLoc = event.getTo();
             if (event.hasChangedPosition()) {
-                final double xzLim = 0.05, yLim = 0.10;
+                final double xzLim = 0.05, yLim = 0.10; // Slight vertical movements can occur
                 final double dx = toLoc.x() - rlLoc.x(),
                         dy = toLoc.y() - rlLoc.y(),
                         dz = toLoc.z() - rlLoc.z();
-                // Slight vertical movements were sometimes observed
                 if (Math.abs(dx) < xzLim && Math.abs(dz) < xzLim && Math.abs(dy) < yLim) return;
                 plugin.teleportToCheckpoint(player, "Position changed: dx=" + dx + " dy=" + dy + " dz=" + dz);
             } else if (event.hasChangedOrientation()) {
