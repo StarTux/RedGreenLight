@@ -1,3 +1,3 @@
-# RedGreenLight
+# Red Light Green Light
 
-RedGreenLight plugin.
+Go when the light is green and stand still when it is red.

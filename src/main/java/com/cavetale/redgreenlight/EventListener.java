@@ -11,10 +11,8 @@ import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.item.WardrobeItem;
 import com.cavetale.tutor.event.PetSpawnEvent;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
@@ -54,7 +52,9 @@ import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 import static com.cavetale.core.font.Unicode.tiny;
@@ -69,6 +69,7 @@ import static net.kyori.adventure.title.Title.title;
 @RequiredArgsConstructor
 public final class EventListener implements Listener {
     private final RedGreenLightPlugin plugin;
+    private final HashMap<Player, Location> playerRedLightLocations = new HashMap<>();
 
     public void enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -82,8 +83,7 @@ public final class EventListener implements Listener {
         if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE) {
             return false;
         }
-        if (!plugin.inGameArea(loc)) return false;
-        return true;
+        return plugin.inGameArea(loc);
     }
 
     @EventHandler
@@ -114,10 +114,8 @@ public final class EventListener implements Listener {
         Location loc = event.getTo();
         if (!isReadyToPlay(player, loc)) return;
         if (plugin.inSpawnArea(loc)) return;
-        if (!plugin.tag.playing.contains(player.getUniqueId())) {
-            // We catch them on the next tick
-            return;
-        }
+        // Ignore players that aren't playing
+        if (!plugin.tag.playing.contains(player.getUniqueId())) return;
         if (player.isGliding() || player.isFlying()) {
             player.sendMessage(text("No flying!", DARK_RED));
             plugin.teleportToCheckpoint(player, "Flying");
@@ -128,64 +126,51 @@ public final class EventListener implements Listener {
             plugin.teleportToCheckpoint(player, "Riding");
             return;
         }
-        for (PotionEffectType pot : PotionEffectType.values()) {
-            if (pot.equals(PotionEffectType.WITHER)) continue;
-            if (pot.equals(PotionEffectType.POISON)) continue;
-            if (pot.equals(PotionEffectType.SLOWNESS)) continue;
-            if (player.hasPotionEffect(pot)) {
-                player.removePotionEffect(pot);
-                player.sendMessage(text("No potion effects!", DARK_RED));
-                plugin.teleportToCheckpoint(player, "Potion Effect");
-                return;
+        for (PotionEffect pe : player.getActivePotionEffects()) {
+            PotionEffectType peType = pe.getType();
+            if (peType.equals(PotionEffectType.WITHER) ||
+                    (peType.equals(PotionEffectType.POISON)) ||
+                    (peType.equals(PotionEffectType.SLOWNESS))) {
+                continue;
             }
-        }
-        if (!isEmpty(player.getEquipment().getHelmet())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Helmet");
+            player.removePotionEffect(peType);
+            player.sendMessage(text("No potion effects!", DARK_RED));
+            plugin.teleportToCheckpoint(player, "Potion Effect");
             return;
         }
-        if (!isEmpty(player.getEquipment().getChestplate())) {
+        EntityEquipment equip = player.getEquipment();
+        if (!isEmpty(equip.getHelmet()) || !isEmpty(equip.getChestplate()) ||
+                !isEmpty(equip.getLeggings()) || !isEmpty(equip.getBoots())) {
             player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Chestplate");
-            return;
+            plugin.teleportToCheckpoint(player, "Armor Equipped");
         }
-        if (!isEmpty(player.getEquipment().getLeggings())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Leggings");
-            return;
-        }
-        if (!isEmpty(player.getEquipment().getBoots())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Boots");
-            return;
-        }
-        if (plugin.tag.light == Light.RED) {
+        if (plugin.tag.light == Light.RED) { // Check for player movement
             if (plugin.inGoalArea(loc)) return;
             if (plugin.isAtCheckpoint(player)) return;
-            if (event.hasChangedPosition()) {
-                final double x = event.getTo().getX() - event.getFrom().getX();
-                final double y = event.getTo().getY() - event.getFrom().getY();
-                final double z = event.getTo().getZ() - event.getFrom().getZ();
-                if (Math.abs(x) < 0.01 && Math.abs(z) < 0.01 && Math.abs(y) < 0.15) {
-                    // Slight vertical movements were sometimes
-                    // observed
-                    return;
-                }
-                plugin.teleportToCheckpoint(player, String.format("Position x=%.4f y=%.4f z=%.4f", x, y, z));
-            } else if (event.hasChangedOrientation()) {
-                final double yaw = event.getTo().getYaw() - event.getFrom().getYaw();
-                final double absYaw = Math.abs(yaw);
-                final double yawThreshold = 1.0;
-                final double pitch = event.getTo().getPitch() - event.getFrom().getPitch();
-                if (Math.abs(pitch) < 0.01) {
-                    if (absYaw < yawThreshold) return;
-                    if (Math.abs(absYaw - 360.0) < yawThreshold) return;
-                }
-                plugin.teleportToCheckpoint(player, String.format("Orientation yaw=%.4f pitch=%.4f", yaw, pitch));
-            } else {
-                plugin.teleportToCheckpoint(player, "Generic Movement");
+            Location rlLoc = this.playerRedLightLocations.get(player);
+            if (rlLoc == null) {
+                rlLoc = event.getFrom();
+                this.playerRedLightLocations.put(player, event.getFrom());
             }
-            player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
+            Location toLoc = event.getTo();
+            if (event.hasChangedPosition()) {
+                final double xzLim = 0.05, yLim = 0.10; // Slight vertical movements can occur
+                final double dx = toLoc.x() - rlLoc.x(),
+                        dy = toLoc.y() - rlLoc.y(),
+                        dz = toLoc.z() - rlLoc.z();
+                if (Math.abs(dx) < xzLim && Math.abs(dz) < xzLim && Math.abs(dy) < yLim) return;
+                plugin.teleportToCheckpoint(player, "Position changed: dx=" + dx + " dy=" + dy + " dz=" + dz);
+            } else if (event.hasChangedOrientation()) {
+                final double pLim = 0.05, yLim = 0.1;
+                final double dp = toLoc.getPitch() - rlLoc.getPitch(),
+                        dy = toLoc.getYaw() - rlLoc.getYaw(),
+                        dyAbs = Math.abs(dy);
+                if (Math.abs(dp) < pLim && (dyAbs < yLim || Math.abs(dyAbs - 360) < yLim)) return;
+                plugin.teleportToCheckpoint(player, "Orientation changed: dy=" + dy + " dp=" + dp);
+            } else {
+                return;
+            }
+            player.sendMessage(text("You moved! Back to your checkpoint!", RED));
         } else if (plugin.inGoalArea(loc)) {
             plugin.getLogger().info(player.getName() + " crossed the finish line");
             plugin.tag.playing.remove(player.getUniqueId());
@@ -228,7 +213,7 @@ public final class EventListener implements Listener {
         player.sendMessage(text("You moved! Back to your checkpoint!", DARK_RED));
     }
 
-    protected void onTick() {
+    void onTick() {
         World w = plugin.getWorld();
         if (w == null) return;
         // Prune players who left
@@ -256,7 +241,11 @@ public final class EventListener implements Listener {
                 plugin.tag.light = Light.YELLOW;
                 plugin.tag.totalCooldown = 30;
                 plugin.tag.cooldown = plugin.tag.totalCooldown;
+                Title title = title(Light.YELLOW.toComponent(),
+                        text("Stop Moving!", YELLOW),
+                        times(Duration.ZERO, Duration.ofMillis(1500), Duration.ZERO));
                 for (Player player : players) {
+                    player.showTitle(title);
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.MASTER, 0.5f, 0.5f);
                 }
             } else if (plugin.tag.light == Light.YELLOW) {
@@ -264,8 +253,9 @@ public final class EventListener implements Listener {
                 plugin.tag.totalCooldown = 100 + plugin.random.nextInt(40) - plugin.random.nextInt(40);
                 plugin.tag.cooldown = plugin.tag.totalCooldown;
                 Title title = title(Light.RED.toComponent(),
-                                    text("Stop Moving", DARK_RED),
-                                    times(Duration.ZERO, Duration.ofSeconds(1), Duration.ZERO));
+                                    text("Stand Still!", RED),
+                                    times(Duration.ZERO, Duration.ofMillis(plugin.tag.totalCooldown * 50), Duration.ZERO));
+                this.playerRedLightLocations.clear();
                 for (Player player : players) {
                     player.showTitle(title);
                     player.playSound(player.getLocation(), Sound.ENTITY_GHAST_SCREAM, SoundCategory.MASTER, 0.5f, 2.0f);
@@ -388,8 +378,7 @@ public final class EventListener implements Listener {
                 if (!w.isChunkLoaded(vec.x >> 4, vec.z >> 4)) continue;
                 Block block = vec.toBlock(w);
                 BlockData bdata = block.getBlockData();
-                if (!(bdata instanceof Dispenser)) continue;
-                Dispenser dispenser = (Dispenser) bdata;
+                if (!(bdata instanceof Dispenser dispenser)) continue;
                 BlockFace facing = dispenser.getFacing();
                 Location location = block.getLocation().add(facing.getModX() + 0.5,
                                                             facing.getModY() + 0.5,
@@ -414,8 +403,7 @@ public final class EventListener implements Listener {
                 for (Vec3i vec : campfireArea.enumerate()) {
                     Block block = vec.toBlock(w);
                     BlockData bdata = block.getBlockData();
-                    if (!(bdata instanceof Campfire)) continue;
-                    Campfire campfire = (Campfire) bdata;
+                    if (!(bdata instanceof Campfire campfire)) continue;
                     int cinterval = vec.z % 4;
                     if (cinterval < 0) cinterval += 4;
                     boolean shouldBeLit = cinterval == litz;
@@ -437,7 +425,7 @@ public final class EventListener implements Listener {
         Vector playerDirection = loc.getDirection();
         Vec3i direction = checkpoint.subtract(pos);
         double playerAngle = Math.atan2(playerDirection.getZ(), playerDirection.getX());
-        double targetAngle = Math.atan2((double) direction.z, (double) direction.x);
+        double targetAngle = Math.atan2(direction.z, direction.x);
         boolean backwards = false;
         if (Double.isFinite(playerAngle) && Double.isFinite(targetAngle)) {
             double angle = targetAngle - playerAngle;
@@ -470,9 +458,8 @@ public final class EventListener implements Listener {
     @EventHandler
     private void onEntityToggleGlide(EntityToggleGlideEvent event) {
         if (!plugin.tag.started) return;
-        if (!(event.getEntity() instanceof Player)) return;
+        if (!(event.getEntity() instanceof Player player)) return;
         if (!event.isGliding()) return;
-        Player player = (Player) event.getEntity();
         Location loc = player.getLocation();
         if (!isReadyToPlay(player, loc)) return;
         if (plugin.inSpawnArea(loc)) return;
@@ -498,8 +485,7 @@ public final class EventListener implements Listener {
     private void onProjectileLaunch(ProjectileLaunchEvent event) {
         if (!plugin.tag.started) return;
         Projectile projectile = event.getEntity();
-        if (!(projectile.getShooter() instanceof Player)) return;
-        Player player = (Player) projectile.getShooter();
+        if (!(projectile.getShooter() instanceof Player player)) return;
         Location loc = player.getLocation();
         if (!isReadyToPlay(player, loc)) return;
         event.setCancelled(true);
@@ -510,7 +496,7 @@ public final class EventListener implements Listener {
     @EventHandler
     private void onPlayerRiptide(PlayerRiptideEvent event) {
         if (!plugin.tag.started) return;
-        Player player = (Player) event.getPlayer();
+        Player player = event.getPlayer();
         Location loc = player.getLocation();
         if (!isReadyToPlay(player, loc)) return;
         player.sendMessage(text("No riptide!", DARK_RED));
@@ -525,7 +511,7 @@ public final class EventListener implements Listener {
         final UUID uuid = player.getUniqueId();
         if (!plugin.isGameWorld(player.getWorld())) return;
         List<Component> lines = new ArrayList<>();
-        lines.add(plugin.TITLE);
+        lines.add(RedGreenLightPlugin.TITLE);
         lines.add(textOfChildren(text(tiny("light "), GRAY), plugin.tag.light.toComponent().decorate(BOLD)));
         lines.add(textOfChildren(text(tiny("players "), GRAY), text(plugin.tag.playing.size(), GREEN)));
         lines.add(textOfChildren(text(tiny("wins "), GRAY), text(plugin.tag.getCompletions(uuid), AQUA)));
