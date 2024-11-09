@@ -616,7 +616,10 @@ public final class EventListener implements Listener {
         plugin.getLogger().info(player.getName() + " void damage");
         event.setCancelled(true);
         if (!plugin.tag.started) {
-            Bukkit.getScheduler().runTask(plugin, () -> player.teleport(plugin.randomSpawnLocation()));
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                    player.teleport(plugin.randomSpawnLocation());
+                    player.setFallDistance(0);
+                });
         } else {
             Bukkit.getScheduler().runTask(plugin, () -> plugin.teleportToCheckpoint(player, "Void Damage"));
         }
