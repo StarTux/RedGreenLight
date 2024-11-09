@@ -553,16 +553,19 @@ public final class EventListener implements Listener {
 
     @EventHandler
     private void onPlayerRespawn(PlayerRespawnEvent event) {
-        if (!plugin.tag.started) return;
         Player player = event.getPlayer();
         if (!plugin.isGameWorld(player.getWorld())) return;
-        final int checkpointIndex = plugin.tag.checkpoints.getOrDefault(player.getUniqueId(), -1);
-        if (checkpointIndex < 0 || checkpointIndex >= plugin.checkpoints.size()) {
+        if (!plugin.tag.started) {
             event.setRespawnLocation(plugin.randomSpawnLocation());
-            return;
+        } else {
+            final int checkpointIndex = plugin.tag.checkpoints.getOrDefault(player.getUniqueId(), -1);
+            if (checkpointIndex < 0 || checkpointIndex >= plugin.checkpoints.size()) {
+                event.setRespawnLocation(plugin.randomSpawnLocation());
+                return;
+            }
+            Vec3i vec = plugin.checkpoints.get(checkpointIndex);
+            event.setRespawnLocation(vec.add(0, 1, 0).toCenterFloorLocation(plugin.getWorld()));
         }
-        Vec3i vec = plugin.checkpoints.get(checkpointIndex);
-        event.setRespawnLocation(vec.add(0, 1, 0).toCenterFloorLocation(plugin.getWorld()));
     }
 
     @EventHandler(ignoreCancelled = true)
