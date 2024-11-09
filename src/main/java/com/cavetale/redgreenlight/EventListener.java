@@ -520,7 +520,6 @@ public final class EventListener implements Listener {
 
     @EventHandler
     private void onPlayerHud(PlayerHudEvent event) {
-        if (!plugin.tag.started) return;
         Player player = event.getPlayer();
         final UUID uuid = player.getUniqueId();
         if (!plugin.isGameWorld(player.getWorld())) return;
