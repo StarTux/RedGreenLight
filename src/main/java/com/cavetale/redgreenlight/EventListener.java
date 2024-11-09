@@ -607,13 +607,16 @@ public final class EventListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     private void onEntityDamage(EntityDamageEvent event) {
-        if (!plugin.tag.started) return;
         if (!(event.getEntity() instanceof Player player)) return;
         if (!plugin.isGameWorld(player.getWorld())) return;
         if (event.getCause() != EntityDamageEvent.DamageCause.VOID) return;
         plugin.getLogger().info(player.getName() + " void damage");
         event.setCancelled(true);
-        Bukkit.getScheduler().runTask(plugin, () -> plugin.teleportToCheckpoint(player, "Void Damage"));
+        if (!plugin.tag.started) {
+            Bukkit.getScheduler().runTask(plugin, () -> player.teleport(plugin.randomSpawnLocation()));
+        } else {
+            Bukkit.getScheduler().runTask(plugin, () -> plugin.teleportToCheckpoint(player, "Void Damage"));
+        }
     }
 
     @EventHandler
