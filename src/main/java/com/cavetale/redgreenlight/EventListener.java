@@ -327,7 +327,7 @@ public final class EventListener implements Listener {
                 creeper = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Creeper.class, c -> {
                         c.setPersistent(false);
                         c.setRemoveWhenFarAway(false);
-                        c.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+                        c.getAttribute(Attribute.MOVEMENT_SPEED).setBaseValue(0);
                     });
                 plugin.creeperMap.put(vec, creeper);
             }
@@ -339,7 +339,7 @@ public final class EventListener implements Listener {
                 skeleton = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Skeleton.class, s -> {
                         s.setPersistent(false);
                         s.setRemoveWhenFarAway(false);
-                        s.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+                        s.getAttribute(Attribute.MOVEMENT_SPEED).setBaseValue(0);
                     });
                 plugin.skeletonMap.put(vec, skeleton);
             }
@@ -351,7 +351,7 @@ public final class EventListener implements Listener {
                 ghast = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Ghast.class, g -> {
                         g.setPersistent(false);
                         g.setRemoveWhenFarAway(false);
-                        g.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+                        g.getAttribute(Attribute.MOVEMENT_SPEED).setBaseValue(0);
                     });
                 plugin.ghastMap.put(vec, ghast);
             }
@@ -381,7 +381,7 @@ public final class EventListener implements Listener {
                 snowman = w.spawn(vec.toLocation(w).add(0.5, 1.0, 0.5), Snowman.class, s -> {
                         s.setPersistent(false);
                         s.setRemoveWhenFarAway(false);
-                        s.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0);
+                        s.getAttribute(Attribute.MOVEMENT_SPEED).setBaseValue(0);
                     });
                 plugin.snowmanMap.put(vec, snowman);
             }
