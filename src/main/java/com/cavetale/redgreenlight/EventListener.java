@@ -47,7 +47,9 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerRiptideEvent;
@@ -154,11 +156,6 @@ public final class EventListener implements Listener {
             plugin.teleportToCheckpoint(player, "Leggings");
             return;
         }
-        if (!isEmpty(player.getEquipment().getBoots())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Boots");
-            return;
-        }
         if (plugin.tag.light == Light.RED) {
             if (plugin.inGoalArea(loc)) return;
             if (plugin.isAtCheckpoint(player)) return;
@@ -240,7 +237,7 @@ public final class EventListener implements Listener {
             }
         }
         // Tick players
-        List<Player> players = plugin.getPresentPlayers();
+        final List<Player> players = plugin.getPresentPlayers();
         if (plugin.tag.cooldown > 1) {
             plugin.tag.cooldown -= 1;
             if (plugin.tag.light == Light.YELLOW) {
@@ -428,6 +425,7 @@ public final class EventListener implements Listener {
                 }
             }
         }
+        plugin.updatePlayerCheckpointHighlights(players);
         plugin.tag.ticks += 1;
     }
 
@@ -632,5 +630,21 @@ public final class EventListener implements Listener {
         if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE) return;
         if (!plugin.isGameWorld(player.getWorld())) return;
         query.setCancelled(true);
+    }
+
+    @EventHandler
+    private void onPlayerDropItem(PlayerDropItemEvent event) {
+        final Player player = event.getPlayer();
+        if (!plugin.isGameWorld(player.getWorld())) return;
+        if (player.getGameMode() == GameMode.CREATIVE) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    private void onPlayerItemDamage(PlayerItemDamageEvent event) {
+        final Player player = event.getPlayer();
+        if (!plugin.isGameWorld(player.getWorld())) return;
+        if (player.getGameMode() == GameMode.CREATIVE) return;
+        event.setCancelled(true);
     }
 }

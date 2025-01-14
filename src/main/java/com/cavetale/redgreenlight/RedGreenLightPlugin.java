@@ -7,6 +7,7 @@ import com.cavetale.core.struct.Vec3i;
 import com.cavetale.core.util.Json;
 import com.cavetale.fam.trophy.Highscore;
 import com.cavetale.mytems.Mytems;
+import com.cavetale.mytems.item.axis.CuboidOutline;
 import com.cavetale.mytems.item.trophy.TrophyCategory;
 import java.io.File;
 import java.time.Duration;
@@ -22,7 +23,10 @@ import java.util.UUID;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Ghast;
@@ -30,6 +34,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Snowman;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import static com.cavetale.core.font.Unicode.tiny;
@@ -72,6 +77,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
                                                text(tiny("Green"), color(0x00FF00)),
                                                text(tiny("Light"), AQUA));
     protected final BossBar bossBar = BossBar.bossBar(TITLE, 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
+    private final Map<UUID, CuboidOutline> playerCheckpointHighlights = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -126,6 +132,62 @@ public final class RedGreenLightPlugin extends JavaPlugin {
             ghast.remove();
         }
         ghastMap.clear();
+        for (CuboidOutline outline : playerCheckpointHighlights.values()) {
+            outline.remove();
+        }
+        playerCheckpointHighlights.clear();
+    }
+
+    protected void updatePlayerCheckpointHighlights(List<Player> presentPlayers) {
+        for (UUID uuid : List.copyOf(playerCheckpointHighlights.keySet())) {
+            final Player player = Bukkit.getPlayer(uuid);
+            if (player == null || !presentPlayers.contains(player)) {
+                final CuboidOutline hl = playerCheckpointHighlights.remove(uuid);
+                if (hl != null) hl.remove();
+            }
+        }
+        for (Player player : presentPlayers) {
+            final boolean valid = checkPlayerCheckpointHighlight(player);
+            if (!valid) {
+                final CuboidOutline hl = playerCheckpointHighlights.remove(player.getUniqueId());
+                if (hl != null) hl.remove();
+            }
+        }
+    }
+
+    /**
+     * Check existing checkpoint highlight and create a new one if
+     * required.
+     *
+     * We may create a new one or tell the calling function to delete
+     * the one that currently exists.  This is because there are many
+     * conditions that may require removal.
+     *
+     * @return true if the current entry is correct, false if it needs
+     *   to be removed.
+     */
+    private boolean checkPlayerCheckpointHighlight(Player player) {
+        final UUID uuid = player.getUniqueId();
+        final int checkpointIndex = tag.checkpoints.getOrDefault(uuid, -1) + 1;
+        if (checkpointIndex < 0 || checkpointIndex >= checkpoints.size()) return false;
+        final Vec3i checkpoint = checkpoints.get(checkpointIndex);
+        if (!player.getWorld().isChunkLoaded(checkpoint.x >> 4, checkpoint.z >> 4)) {
+            return false;
+        }
+        if (player.getWorld().getChunkAt(checkpoint.x >> 4, checkpoint.z >> 4).getLoadLevel() != Chunk.LoadLevel.ENTITY_TICKING) {
+            return false;
+        }
+        final CuboidOutline old = playerCheckpointHighlights.get(uuid);
+        if (old != null) {
+            return old.getCuboid().getMin().equals(checkpoint);
+        }
+        final CuboidOutline hl = new CuboidOutline(player.getWorld(), new Cuboid(checkpoint.x, checkpoint.y, checkpoint.z,
+                                                                                 checkpoint.x, checkpoint.y, checkpoint.z));
+        playerCheckpointHighlights.put(uuid, hl);
+        hl.showOnlyTo(player);
+        hl.spawn();
+        hl.glow(Color.LIME);
+        return true;
     }
 
     protected void saveTag() {
@@ -257,6 +319,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         player.setFoodLevel(20);
         player.setSaturation(20f);
         player.setFireTicks(0);
+        player.getInventory().setBoots(new ItemStack(Material.LEATHER_BOOTS));
     }
 
     protected void teleportToCheckpoint(Player player, String reason) {
@@ -286,6 +349,7 @@ public final class RedGreenLightPlugin extends JavaPlugin {
         player.setHealth(20.0);
         player.setFoodLevel(20);
         player.setSaturation(20f);
+        player.getInventory().setBoots(new ItemStack(Material.LEATHER_BOOTS));
     }
 
     protected void addPlaying(Player player) {
