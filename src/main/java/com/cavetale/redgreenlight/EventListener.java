@@ -206,6 +206,7 @@ public final class EventListener implements Listener {
                 String cmd = "titles unlockset " + player.getName() + " " + String.join(" ", titles);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
                 Money.get().give(player.getUniqueId(), 1000.0, plugin, "Red Light Green Light");
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
             }
             plugin.teleportToSpawn(player);
         }
@@ -603,6 +604,7 @@ public final class EventListener implements Listener {
         player.setSaturation(20f);
         if (plugin.tag.event) {
             Money.get().give(player.getUniqueId(), 100.0, plugin, "Red Light Green Light");
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
         }
     }
 

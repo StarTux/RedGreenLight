@@ -355,9 +355,6 @@ public final class RedGreenLightPlugin extends JavaPlugin {
     protected void addPlaying(Player player) {
         if (tag.playing.contains(player.getUniqueId())) return;
         tag.playing.add(player.getUniqueId());
-        if (tag.event) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ml add " + player.getName());
-        }
     }
 
     protected void startTicking() {
