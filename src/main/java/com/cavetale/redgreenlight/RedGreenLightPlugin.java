@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import lombok.Getter;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -44,6 +45,7 @@ import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextColor.color;
 
+@Getter
 public final class RedGreenLightPlugin extends JavaPlugin {
     protected RedGreenLightCommand redgreenlightCommand = new RedGreenLightCommand(this);
     protected EventListener eventListener = new EventListener(this);

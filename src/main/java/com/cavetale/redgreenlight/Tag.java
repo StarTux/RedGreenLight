@@ -5,7 +5,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import lombok.Getter;
 
+@Getter
 public final class Tag {
     protected boolean started;
     protected String world = "";
