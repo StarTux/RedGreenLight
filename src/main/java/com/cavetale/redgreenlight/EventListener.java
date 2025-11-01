@@ -442,6 +442,7 @@ public final class EventListener implements Listener {
         double playerAngle = Math.atan2(playerDirection.getZ(), playerDirection.getX());
         double targetAngle = Math.atan2((double) direction.z, (double) direction.x);
         boolean backwards = false;
+        final Component distance = text(" " + ((int) Math.round(direction.length())) + " blocks", GRAY);
         if (Double.isFinite(playerAngle) && Double.isFinite(targetAngle)) {
             double angle = targetAngle - playerAngle;
             if (angle > Math.PI) angle -= 2.0 * Math.PI;
@@ -453,18 +454,18 @@ public final class EventListener implements Listener {
                 if (false && backwardsTicks > 60 && (plugin.tag.ticks % 30) < 15) {
                     player.sendActionBar(text("TURN AROUND", DARK_RED, BOLD));
                 } else {
-                    player.sendActionBar(Mytems.ARROW_DOWN.component);
+                    player.sendActionBar(textOfChildren(Mytems.ARROW_DOWN.component, distance));
                 }
-            } else if (angle < Math.PI * -0.25) {
-                player.sendActionBar(Mytems.ARROW_LEFT.component);
-            } else if (angle > Math.PI * 0.25) {
-                player.sendActionBar(Mytems.ARROW_RIGHT.component);
+            } else if (angle < Math.PI * -0.35) {
+                player.sendActionBar(textOfChildren(Mytems.ARROW_LEFT.component, distance));
+            } else if (angle > Math.PI * 0.35) {
+                player.sendActionBar(textOfChildren(Mytems.ARROW_RIGHT.component, distance));
             } else if (angle < Math.PI * -0.125) {
-                player.sendActionBar(Mytems.TURN_LEFT.component);
+                player.sendActionBar(textOfChildren(Mytems.TURN_LEFT.component, distance));
             } else if (angle > Math.PI * 0.125) {
-                player.sendActionBar(Mytems.TURN_RIGHT.component);
+                player.sendActionBar(textOfChildren(Mytems.TURN_RIGHT.component, distance));
             } else {
-                player.sendActionBar(Mytems.ARROW_UP.component);
+                player.sendActionBar(textOfChildren(Mytems.ARROW_UP.component, distance));
             }
         }
         if (!backwards) plugin.backwardsTicks.remove(uuid);
