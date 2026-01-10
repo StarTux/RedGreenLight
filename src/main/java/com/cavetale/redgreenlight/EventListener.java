@@ -587,7 +587,6 @@ public final class EventListener implements Listener {
         if (!plugin.tag.playing.contains(player.getUniqueId())) return;
         if (!plugin.inGameArea(player.getLocation())) return;
         if (!event.hasBlock()) return;
-        if (event.getClickedBlock().getType() != Material.RESPAWN_ANCHOR) return;
         event.setUseInteractedBlock(Event.Result.DENY);
         event.setCancelled(true);
         Vec3i vec = Vec3i.of(event.getClickedBlock());
