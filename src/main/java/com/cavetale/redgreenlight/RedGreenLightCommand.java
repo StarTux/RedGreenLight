@@ -4,7 +4,6 @@ import com.cavetale.core.command.AbstractCommand;
 import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.playercache.PlayerCache;
 import com.cavetale.fam.trophy.Highscore;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import static java.util.stream.Collectors.toList;
@@ -107,9 +106,7 @@ public final class RedGreenLightCommand extends AbstractCommand<RedGreenLightPlu
             .senderCaller(sender -> {
                     int count = plugin.rewardHighscore();
                     sender.sendMessage(text("Rewarded " + count + " highscores", AQUA));
-                    for (Component line : Highscore.rewardMoneyWithFeedback(plugin, plugin.getTag().getScores(), "Red Light Green Light")) {
-                        sender.sendMessage(line);
-                    }
+                    Highscore.rewardMoneyWithFeedback(sender, plugin, plugin.getTag().getScores(), "Red Light Green Light");
                 });
     }
 }
