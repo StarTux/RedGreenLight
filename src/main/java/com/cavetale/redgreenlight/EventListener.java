@@ -36,7 +36,6 @@ import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Snowman;
 import org.bukkit.event.Event;
@@ -44,20 +43,15 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 import static com.cavetale.core.font.Unicode.tiny;
 import static net.kyori.adventure.text.Component.newline;
@@ -120,40 +114,9 @@ public final class EventListener implements Listener {
             // We catch them on the next tick
             return;
         }
-        if (player.isGliding() || player.isFlying()) {
-            player.sendMessage(text("No flying!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Flying");
-            return;
-        }
         if (player.getVehicle() != null) {
             player.sendMessage(text("No riding!", DARK_RED));
             plugin.teleportToCheckpoint(player, "Riding");
-            return;
-        }
-        for (PotionEffectType pot : PotionEffectType.values()) {
-            if (pot.equals(PotionEffectType.WITHER)) continue;
-            if (pot.equals(PotionEffectType.POISON)) continue;
-            if (pot.equals(PotionEffectType.SLOWNESS)) continue;
-            if (player.hasPotionEffect(pot)) {
-                player.removePotionEffect(pot);
-                player.sendMessage(text("No potion effects!", DARK_RED));
-                plugin.teleportToCheckpoint(player, "Potion Effect");
-                return;
-            }
-        }
-        if (!isEmpty(player.getEquipment().getHelmet())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Helmet");
-            return;
-        }
-        if (!isEmpty(player.getEquipment().getChestplate())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Chestplate");
-            return;
-        }
-        if (!isEmpty(player.getEquipment().getLeggings())) {
-            player.sendMessage(text("No armor!", DARK_RED));
-            plugin.teleportToCheckpoint(player, "Leggings");
             return;
         }
         if (plugin.tag.light == Light.RED) {
@@ -305,10 +268,6 @@ public final class EventListener implements Listener {
                     plugin.teleportToSpawn(player);
                 }
                 continue;
-            }
-            if (player.isGliding() || player.isFlying()) {
-                player.sendMessage(text("No flying!", DARK_RED));
-                plugin.teleportToCheckpoint(player, "Tick Flight");
             }
             if (player.getVehicle() != null && !plugin.inSpawnArea(loc)) {
                 player.sendMessage(text("No riding!", DARK_RED));
@@ -469,57 +428,6 @@ public final class EventListener implements Listener {
             }
         }
         if (!backwards) plugin.backwardsTicks.remove(uuid);
-    }
-
-    @EventHandler
-    private void onEntityToggleGlide(EntityToggleGlideEvent event) {
-        if (!plugin.tag.started) return;
-        if (!(event.getEntity() instanceof Player)) return;
-        if (!event.isGliding()) return;
-        Player player = (Player) event.getEntity();
-        Location loc = player.getLocation();
-        if (!isReadyToPlay(player, loc)) return;
-        if (plugin.inSpawnArea(loc)) return;
-        event.setCancelled(true);
-        player.sendMessage(text("No flying!", DARK_RED));
-        plugin.teleportToCheckpoint(player, "Toggle Glide");
-    }
-
-    @EventHandler
-    private void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
-        if (!plugin.tag.started) return;
-        if (!event.isFlying()) return;
-        Player player = event.getPlayer();
-        Location loc = player.getLocation();
-        if (!isReadyToPlay(player, loc)) return;
-        if (plugin.inSpawnArea(loc)) return;
-        event.setCancelled(true);
-        player.sendMessage(text("No flying!", DARK_RED));
-        plugin.teleportToCheckpoint(player, "Toggle Flight");
-    }
-
-    @EventHandler
-    private void onProjectileLaunch(ProjectileLaunchEvent event) {
-        if (!plugin.tag.started) return;
-        Projectile projectile = event.getEntity();
-        if (!(projectile.getShooter() instanceof Player)) return;
-        Player player = (Player) projectile.getShooter();
-        Location loc = player.getLocation();
-        if (!isReadyToPlay(player, loc)) return;
-        event.setCancelled(true);
-        player.sendMessage(text("No projectiles!", DARK_RED));
-        plugin.teleportToCheckpoint(player, "Projectile Launch");
-    }
-
-    @EventHandler
-    private void onPlayerRiptide(PlayerRiptideEvent event) {
-        if (!plugin.tag.started) return;
-        Player player = (Player) event.getPlayer();
-        Location loc = player.getLocation();
-        if (!isReadyToPlay(player, loc)) return;
-        player.sendMessage(text("No riptide!", DARK_RED));
-        plugin.teleportToCheckpoint(player, "Riptide");
-        Bukkit.getScheduler().runTask(plugin, () -> player.setVelocity(new Vector().zero()));
     }
 
     @EventHandler
